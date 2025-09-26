@@ -339,7 +339,9 @@ class TestBMPParser:
         """Test error handling in parser."""
         # Test with corrupted data that should trigger exception handling during per-peer header parsing
         # Create a route monitoring message with correct message length but insufficient per-peer header data
-        corrupted_data = b"\x03\x00\x00\x00\x2A\x00" + b"\xff" * 36  # 42 bytes total, need 42 for per-peer header
+        corrupted_data = (
+            b"\x03\x00\x00\x00\x2A\x00" + b"\xff" * 36
+        )  # 42 bytes total, need 42 for per-peer header
 
         with patch("src.bmp.parser.logger") as mock_logger:
             result = bmp_parser.parse_message(corrupted_data)
@@ -699,7 +701,16 @@ class TestBMPParserEdgeCases:
         # MPLS Label1: Label=3000, EXP=5, S=0 (3 bytes, no TTL)
         mpls_label1 = struct.pack(">I", (3000 << 4) | (5 << 1) | 0)[1:4]
 
-        data = rd_data + esi_data + eth_tag + bytes([mac_len]) + mac_data + bytes([ip_len]) + ipv4_data + mpls_label1
+        data = (
+            rd_data
+            + esi_data
+            + eth_tag
+            + bytes([mac_len])
+            + mac_data
+            + bytes([ip_len])
+            + ipv4_data
+            + mpls_label1
+        )
 
         result = bmp_parser._parse_evpn_route(2, data)
 
@@ -724,11 +735,39 @@ class TestBMPParserEdgeCases:
         mac_len = 48  # MAC length in bits
         mac_data = bytes([0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC])  # MAC address
         ip_len = 128  # IPv6 length in bits
-        ipv6_data = bytes([0x20, 0x01, 0x0D, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01])  # 2001:db8::1
+        ipv6_data = bytes(
+            [
+                0x20,
+                0x01,
+                0x0D,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+            ]
+        )  # 2001:db8::1
         # MPLS Label1: Label=4000, EXP=3, S=1 (3 bytes, no TTL)
         mpls_label1 = struct.pack(">I", (4000 << 4) | (3 << 1) | 1)[1:4]
 
-        data = rd_data + esi_data + eth_tag + bytes([mac_len]) + mac_data + bytes([ip_len]) + ipv6_data + mpls_label1
+        data = (
+            rd_data
+            + esi_data
+            + eth_tag
+            + bytes([mac_len])
+            + mac_data
+            + bytes([ip_len])
+            + ipv6_data
+            + mpls_label1
+        )
 
         result = bmp_parser._parse_evpn_route(2, data)
 
@@ -758,7 +797,16 @@ class TestBMPParserEdgeCases:
         # MPLS Label2: Label=2000, EXP=2, S=1 (3 bytes, no TTL)
         mpls_label2 = struct.pack(">I", (2000 << 4) | (2 << 1) | 1)[1:4]
 
-        data = rd_data + esi_data + eth_tag + bytes([mac_len]) + mac_data + bytes([ip_len]) + mpls_label1 + mpls_label2
+        data = (
+            rd_data
+            + esi_data
+            + eth_tag
+            + bytes([mac_len])
+            + mac_data
+            + bytes([ip_len])
+            + mpls_label1
+            + mpls_label2
+        )
 
         result = bmp_parser._parse_evpn_route(2, data)
 
@@ -803,7 +851,26 @@ class TestBMPParserEdgeCases:
         rd_data = struct.pack(">HHI", 0, 65002, 600)  # RD: 65002:600
         eth_tag = struct.pack(">I", 600)  # Ethernet Tag = 600
         ip_len = 128  # IPv6 length in bits
-        ipv6_data = bytes([0x20, 0x01, 0x0D, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02])  # 2001:db8::2
+        ipv6_data = bytes(
+            [
+                0x20,
+                0x01,
+                0x0D,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x02,
+            ]
+        )  # 2001:db8::2
 
         data = rd_data + eth_tag + bytes([ip_len]) + ipv6_data
 
@@ -861,7 +928,16 @@ class TestBMPParserEdgeCases:
         # MPLS Label: Label=1100, EXP=4, S=1, TTL=200
         mpls_label = struct.pack(">I", (1100 << 4) | (4 << 1) | 1)[1:4]
 
-        data = rd_data + esi_data + eth_tag + bytes([ip_prefix_len]) + ip_prefix_data + bytes([gw_ip_len]) + gw_ip_data + mpls_label
+        data = (
+            rd_data
+            + esi_data
+            + eth_tag
+            + bytes([ip_prefix_len])
+            + ip_prefix_data
+            + bytes([gw_ip_len])
+            + gw_ip_data
+            + mpls_label
+        )
 
         result = bmp_parser._parse_evpn_route(5, data)
 
@@ -885,13 +961,43 @@ class TestBMPParserEdgeCases:
         esi_data = bytes([0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11, 0x22, 0x33, 0x44])  # ESI
         eth_tag = struct.pack(">I", 900)  # Ethernet Tag = 900
         ip_prefix_len = 64  # IPv6 /64 prefix
-        ip_prefix_data = bytes([0x20, 0x01, 0x0D, 0xB8, 0x00, 0x00, 0x00, 0x00])  # 2001:db8::/64 (8 bytes)
+        ip_prefix_data = bytes(
+            [0x20, 0x01, 0x0D, 0xB8, 0x00, 0x00, 0x00, 0x00]
+        )  # 2001:db8::/64 (8 bytes)
         gw_ip_len = 128  # IPv6 gateway
-        gw_ip_data = bytes([0x20, 0x01, 0x0D, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01])  # 2001:db8::1
+        gw_ip_data = bytes(
+            [
+                0x20,
+                0x01,
+                0x0D,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+            ]
+        )  # 2001:db8::1
         # MPLS Label: Label=1200, EXP=2, S=1, TTL=100
         mpls_label = struct.pack(">I", (1200 << 4) | (2 << 1) | 1)[1:4]
 
-        data = rd_data + esi_data + eth_tag + bytes([ip_prefix_len]) + ip_prefix_data + bytes([gw_ip_len]) + gw_ip_data + mpls_label
+        data = (
+            rd_data
+            + esi_data
+            + eth_tag
+            + bytes([ip_prefix_len])
+            + ip_prefix_data
+            + bytes([gw_ip_len])
+            + gw_ip_data
+            + mpls_label
+        )
 
         result = bmp_parser._parse_evpn_route(5, data)
 
@@ -920,7 +1026,15 @@ class TestBMPParserEdgeCases:
         # MPLS Label: Label=1300, EXP=1, S=1, TTL=50
         mpls_label = struct.pack(">I", (1300 << 4) | (1 << 1) | 1)[1:4]
 
-        data = rd_data + esi_data + eth_tag + bytes([ip_prefix_len]) + ip_prefix_data + bytes([gw_ip_len]) + mpls_label
+        data = (
+            rd_data
+            + esi_data
+            + eth_tag
+            + bytes([ip_prefix_len])
+            + ip_prefix_data
+            + bytes([gw_ip_len])
+            + mpls_label
+        )
 
         result = bmp_parser._parse_evpn_route(5, data)
 

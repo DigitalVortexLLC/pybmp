@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class ParseError(Exception):
     """Custom exception for parsing errors."""
+
     pass
 
 
@@ -31,16 +32,18 @@ def parse_mpls_label(data: bytes, offset: int = 0) -> Dict[str, int]:
         ParseError: If insufficient data available
     """
     if len(data) < offset + 3:
-        raise ParseError(f"Insufficient data for MPLS label: need 3 bytes, got {len(data) - offset}")
+        raise ParseError(
+            f"Insufficient data for MPLS label: need 3 bytes, got {len(data) - offset}"
+        )
 
-    label_bytes = data[offset:offset + 3]
+    label_bytes = data[offset : offset + 3]
     # MPLS label format: 20 bits label + 3 bits EXP + 1 bit S
     label_data = (label_bytes[0] << 16) | (label_bytes[1] << 8) | label_bytes[2]
 
     return {
         "mpls_label": (label_data >> 4) & 0xFFFFF,  # 20 bits (bits 23-4)
-        "mpls_exp": (label_data >> 1) & 0x07,       # 3 bits (bits 3-1)
-        "mpls_s": label_data & 0x01                 # 1 bit (bit 0)
+        "mpls_exp": (label_data >> 1) & 0x07,  # 3 bits (bits 3-1)
+        "mpls_s": label_data & 0x01,  # 1 bit (bit 0)
     }
 
 
@@ -94,9 +97,11 @@ def parse_variable_length_ip(data: bytes, offset: int) -> Tuple[Optional[str], i
 
     ip_len_bytes = (ip_len_bits + 7) // 8  # Round up to nearest byte
     if len(data) < new_offset + ip_len_bytes:
-        raise ParseError(f"Insufficient data for IP address: need {ip_len_bytes} bytes, got {len(data) - new_offset}")
+        raise ParseError(
+            f"Insufficient data for IP address: need {ip_len_bytes} bytes, got {len(data) - new_offset}"
+        )
 
-    ip_bytes = data[new_offset:new_offset + ip_len_bytes]
+    ip_bytes = data[new_offset : new_offset + ip_len_bytes]
     new_offset += ip_len_bytes
 
     try:
@@ -137,9 +142,11 @@ def parse_ip_prefix(data: bytes, offset: int) -> Tuple[Optional[str], int]:
 
     prefix_bytes = (prefix_len + 7) // 8  # Round up to nearest byte
     if len(data) < new_offset + prefix_bytes:
-        raise ParseError(f"Insufficient data for IP prefix: need {prefix_bytes} bytes, got {len(data) - new_offset}")
+        raise ParseError(
+            f"Insufficient data for IP prefix: need {prefix_bytes} bytes, got {len(data) - new_offset}"
+        )
 
-    prefix_data = data[new_offset:new_offset + prefix_bytes]
+    prefix_data = data[new_offset : new_offset + prefix_bytes]
     new_offset += prefix_bytes
 
     try:
@@ -175,9 +182,11 @@ def parse_mac_address(data: bytes, offset: int) -> Tuple[str, int]:
         ParseError: If insufficient data
     """
     if len(data) < offset + 6:
-        raise ParseError(f"Insufficient data for MAC address: need 6 bytes, got {len(data) - offset}")
+        raise ParseError(
+            f"Insufficient data for MAC address: need 6 bytes, got {len(data) - offset}"
+        )
 
-    mac_bytes = data[offset:offset + 6]
+    mac_bytes = data[offset : offset + 6]
     mac_str = ":".join(f"{b:02x}" for b in mac_bytes)
     return mac_str, offset + 6
 
@@ -198,10 +207,12 @@ def safe_struct_unpack(format_str: str, data: bytes, offset: int = 0) -> Tuple[A
     """
     size = struct.calcsize(format_str)
     if len(data) < offset + size:
-        raise ParseError(f"Insufficient data for struct unpack: need {size} bytes, got {len(data) - offset}")
+        raise ParseError(
+            f"Insufficient data for struct unpack: need {size} bytes, got {len(data) - offset}"
+        )
 
     try:
-        value = struct.unpack(format_str, data[offset:offset + size])[0]
+        value = struct.unpack(format_str, data[offset : offset + size])[0]
         return value, offset + size
     except struct.error as e:
         raise ParseError(f"Struct unpack error: {e}")

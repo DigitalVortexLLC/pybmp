@@ -33,8 +33,10 @@ class TestDatabasePool:
 
         with patch("src.database.connection.asyncpg.create_pool") as mock_create_pool:
             mock_pool = AsyncMock()
+
             async def async_return():
                 return mock_pool
+
             mock_create_pool.return_value = async_return()
 
             await db_pool.connect()

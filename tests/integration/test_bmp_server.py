@@ -487,11 +487,10 @@ class TestBMPServerIntegrationScenarios:
         # Mock the process_message method to simulate adding routes to buffer
         async def mock_process_message(message, router_ip):
             # Simulate processing 3 routes
-            processor.route_buffer.extend([
-                {"prefix": "10.0.1.0/24"},
-                {"prefix": "10.0.2.0/24"},
-                {"prefix": "10.0.3.0/24"}
-            ])
+            processor.route_buffer.extend(
+                [{"prefix": "10.0.1.0/24"}, {"prefix": "10.0.2.0/24"}, {"prefix": "10.0.3.0/24"}]
+            )
+
         processor.process_message = mock_process_message
 
         # Mock flush_routes to call database but preserve buffer for testing
@@ -499,6 +498,7 @@ class TestBMPServerIntegrationScenarios:
             if processor.route_buffer:
                 await mock_db_pool.batch_insert_routes(processor.route_buffer.copy())
                 # Don't clear buffer for testing purposes
+
         processor.flush_routes = mock_flush_routes
 
         # Create a route monitoring message with multiple routes

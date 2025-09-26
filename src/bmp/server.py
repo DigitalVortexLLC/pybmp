@@ -199,7 +199,7 @@ class BMPServer:
         try:
             addr = writer.get_extra_info("peername")
             # Handle case where get_extra_info returns a coroutine (in tests)
-            if hasattr(addr, '__await__'):
+            if hasattr(addr, "__await__"):
                 addr = await addr
             router_ip = addr[0] if addr else "unknown"
         except (TypeError, IndexError, AttributeError):

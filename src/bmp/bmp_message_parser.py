@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class BMPMessageType(IntEnum):
     """BMP message types."""
+
     ROUTE_MONITORING = 0
     STATS_REPORT = 1
     STATISTICS_REPORT = 1  # Alias for backward compatibility
@@ -54,17 +55,17 @@ class BMPMessageParser:
             "v_flag": bool(flags_byte & 0x80),  # Bit 0 (MSB): IPv6 flag
             "l_flag": bool(flags_byte & 0x40),  # Bit 1: Legacy format flag
             "a_flag": bool(flags_byte & 0x20),  # Bit 2: AS path flag
-            "raw": flags_byte
+            "raw": flags_byte,
         }
-        header["peer_distinguisher"] = data[offset:offset + 8].hex()
+        header["peer_distinguisher"] = data[offset : offset + 8].hex()
         offset += 8
 
         # Peer address (16 bytes, can be IPv4 or IPv6)
-        peer_addr_data = data[offset:offset + 16]
+        peer_addr_data = data[offset : offset + 16]
         offset += 16
 
         # Check if it's an IPv4 address (last 4 bytes non-zero, first 12 bytes zero)
-        if peer_addr_data[:12] == b'\x00' * 12:
+        if peer_addr_data[:12] == b"\x00" * 12:
             header["peer_ip"] = str(ipaddress.IPv4Address(peer_addr_data[12:16]))
         else:
             # For IPv6 addresses that are IPv4-mapped, extract the IPv4 portion
@@ -79,7 +80,7 @@ class BMPMessageParser:
 
         # Parse remaining fields
         header["peer_as"], offset = safe_struct_unpack(">I", data, offset)
-        header["peer_bgp_id"] = str(ipaddress.IPv4Address(data[offset:offset + 4]))
+        header["peer_bgp_id"] = str(ipaddress.IPv4Address(data[offset : offset + 4]))
         offset += 4
         header["timestamp_sec"], offset = safe_struct_unpack(">I", data, offset)
         header["timestamp_usec"], offset = safe_struct_unpack(">I", data, offset)
@@ -93,11 +94,11 @@ class BMPMessageParser:
         validate_data_length(data, offset + 20, "PEER_UP message body")
 
         # Local address (16 bytes)
-        local_addr_data = data[offset:offset + 16]
+        local_addr_data = data[offset : offset + 16]
         offset += 16
 
         # Check if it's IPv4 or IPv6
-        if local_addr_data[:12] == b'\x00' * 12:
+        if local_addr_data[:12] == b"\x00" * 12:
             local_ip = str(ipaddress.IPv4Address(local_addr_data[12:16]))
         else:
             # For IPv6 addresses that are IPv4-mapped, extract the IPv4 portion
@@ -130,7 +131,7 @@ class BMPMessageParser:
             "local_port": local_port,
             "remote_port": remote_port,
             "sent_open_message": sent_open,
-            "received_open_message": received_open
+            "received_open_message": received_open,
         }
 
     def parse_peer_down(self, data: bytes) -> Dict[str, Any]:
@@ -142,11 +143,7 @@ class BMPMessageParser:
         # Reason for peer down
         reason, offset = safe_struct_unpack(">B", data, offset)
 
-        message = {
-            "type": "peer_down",
-            "peer": peer_header,
-            "reason": reason
-        }
+        message = {"type": "peer_down", "peer": peer_header, "reason": reason}
 
         # Parse additional data based on reason
         if reason == 1 and offset < len(data):
@@ -183,22 +180,18 @@ class BMPMessageParser:
                 break
 
             # Parse stat data based on type and length
-            stat_data = data[offset:offset + stat_len]
+            stat_data = data[offset : offset + stat_len]
             offset += stat_len
 
             stat_value = self._parse_stat_value(stat_type, stat_data)
-            statistics.append({
-                "type": stat_type,
-                "length": stat_len,
-                "value": stat_value
-            })
+            statistics.append({"type": stat_type, "length": stat_len, "value": stat_value})
 
         return {
             "type": "stats_report",
             "peer": peer_header,
             "statistics_count": stats_count,
             "statistics": statistics,
-            "stats": statistics  # For backward compatibility
+            "stats": statistics,  # For backward compatibility
         }
 
     def parse_initiation(self, data: bytes) -> Dict[str, Any]:
@@ -249,17 +242,13 @@ class BMPMessageParser:
                     break
 
                 # Extract TLV data
-                tlv_data = data[offset:offset + tlv_len]
+                tlv_data = data[offset : offset + tlv_len]
                 offset += tlv_len
 
                 # Parse based on TLV type
                 tlv_value = self._parse_tlv_value(tlv_type, tlv_data)
 
-                tlvs.append({
-                    "type": tlv_type,
-                    "length": tlv_len,
-                    "value": tlv_value
-                })
+                tlvs.append({"type": tlv_type, "length": tlv_len, "value": tlv_value})
 
             except Exception as e:
                 logger.warning(f"Error parsing TLV at offset {offset}: {e}")
@@ -272,17 +261,17 @@ class BMPMessageParser:
         # Common TLV types for INITIATION/TERMINATION
         if tlv_type == 0:  # String
             try:
-                return data.decode('utf-8')
+                return data.decode("utf-8")
             except UnicodeDecodeError:
                 return data.hex()
         elif tlv_type == 1:  # System Description
             try:
-                return data.decode('utf-8')
+                return data.decode("utf-8")
             except UnicodeDecodeError:
                 return data.hex()
         elif tlv_type == 2:  # System Name
             try:
-                return data.decode('utf-8')
+                return data.decode("utf-8")
             except UnicodeDecodeError:
                 return data.hex()
         else:

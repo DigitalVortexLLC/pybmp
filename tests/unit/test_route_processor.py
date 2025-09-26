@@ -460,7 +460,9 @@ class TestRouteProcessor:
 
         # Create message that triggers error during processing
         # Patch the route processor method to raise an exception
-        with patch.object(route_processor, '_process_route_monitoring', side_effect=Exception("Test error")):
+        with patch.object(
+            route_processor, "_process_route_monitoring", side_effect=Exception("Test error")
+        ):
             valid_message = {"type": "route_monitoring"}
 
             with patch("src.bmp.processor.logger") as mock_logger:
@@ -468,7 +470,6 @@ class TestRouteProcessor:
 
         # Error should be counted
         assert route_processor.stats["errors"] == 1
-
 
     @pytest.mark.asyncio
     @pytest.mark.unit

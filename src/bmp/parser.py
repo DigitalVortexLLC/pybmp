@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Export the enums for backward compatibility
 class BMPPeerType(IntEnum):
     """BMP Peer Type values."""
+
     GLOBAL_INSTANCE = 0
     RD_INSTANCE = 1
     LOCAL_INSTANCE = 2
@@ -28,6 +29,7 @@ class BMPPeerType(IntEnum):
 
 class BGPMessageType(IntEnum):
     """BGP message types."""
+
     OPEN = 1
     UPDATE = 2
     NOTIFICATION = 3
@@ -59,7 +61,7 @@ class BMPParser:
             "peer_down": 0,
             "stats_reports": 0,
             "initiations": 0,
-            "terminations": 0
+            "terminations": 0,
         }
 
     def parse_message(self, data: bytes) -> Optional[Dict[str, Any]]:
@@ -157,11 +159,7 @@ class BMPParser:
             if offset < len(data):
                 bgp_message = self.bgp_parser.parse_bgp_message(data[offset:])
 
-                return {
-                    "type": "route_monitoring",
-                    "peer": peer_header,
-                    "bgp_message": bgp_message
-                }
+                return {"type": "route_monitoring", "peer": peer_header, "bgp_message": bgp_message}
             else:
                 logger.error("No BGP message data in ROUTE_MONITORING")
                 return None
@@ -178,7 +176,7 @@ class BMPParser:
             BMPMessageType.PEER_DOWN: "peer_down",
             BMPMessageType.STATS_REPORT: "stats_reports",
             BMPMessageType.INITIATION: "initiations",
-            BMPMessageType.TERMINATION: "terminations"
+            BMPMessageType.TERMINATION: "terminations",
         }
 
         stat_name = type_map.get(msg_type)
@@ -218,6 +216,7 @@ class BMPParser:
     def _parse_route_distinguisher(self, data: bytes) -> str:
         """Legacy method for backward compatibility."""
         from .parsing_utils import parse_route_distinguisher
+
         return parse_route_distinguisher(data)
 
     # Additional legacy methods that might be called by external code
@@ -277,12 +276,15 @@ class BMPParser:
                 as_numbers.append(as_num)
 
             # Determine type name
-            type_name = "AS_SEQUENCE" if path_type == 2 else "AS_SET" if path_type == 1 else f"AS_TYPE_{path_type}"
+            type_name = (
+                "AS_SEQUENCE"
+                if path_type == 2
+                else "AS_SET"
+                if path_type == 1
+                else f"AS_TYPE_{path_type}"
+            )
 
-            legacy_format.append({
-                "type": type_name,
-                "as_numbers": as_numbers
-            })
+            legacy_format.append({"type": type_name, "as_numbers": as_numbers})
 
         return legacy_format
 
@@ -331,12 +333,8 @@ class BMPParser:
                 if offset + cap_len > len(data):
                     break
 
-                cap_value = data[offset:offset + cap_len]
-                capabilities.append({
-                    "code": cap_code,
-                    "length": cap_len,
-                    "value": cap_value.hex()
-                })
+                cap_value = data[offset : offset + cap_len]
+                capabilities.append({"code": cap_code, "length": cap_len, "value": cap_value.hex()})
                 offset += cap_len
 
             return capabilities

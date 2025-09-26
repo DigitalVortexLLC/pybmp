@@ -3,13 +3,7 @@ import pytest
 import struct
 from unittest.mock import patch, MagicMock
 
-from src.bmp.bgp_parser import (
-    BGPMessageParser,
-    BGPMessageType,
-    BGPAttributeType,
-    AFI,
-    SAFI
-)
+from src.bmp.bgp_parser import BGPMessageParser, BGPMessageType, BGPAttributeType, AFI, SAFI
 from src.bmp.parsing_utils import ParseError
 
 
@@ -155,7 +149,7 @@ class TestBGPMessageParser:
     def test_parse_mp_reach_nlri_ipv4(self, bgp_parser):
         """Test parsing MP_REACH_NLRI for IPv4."""
         # AFI(2) + SAFI(1) + next_hop_len(1) + next_hop(4) + reserved(1) + nlri
-        next_hop = struct.pack(">I", 0xc0000201)  # 192.0.2.1
+        next_hop = struct.pack(">I", 0xC0000201)  # 192.0.2.1
         nlri = b"\x18\xc0\x00\x02"  # 192.0.2.0/24
         mp_reach_data = struct.pack(">HBB", AFI.IPV4, SAFI.UNICAST, 4) + next_hop + b"\x00" + nlri
 
@@ -187,7 +181,7 @@ class TestBGPMessageParser:
 
     def test_parse_next_hop_ipv4(self, bgp_parser):
         """Test parsing IPv4 next hop."""
-        next_hop_data = struct.pack(">I", 0xc0000201)  # 192.0.2.1
+        next_hop_data = struct.pack(">I", 0xC0000201)  # 192.0.2.1
         result = bgp_parser._parse_next_hop(next_hop_data, AFI.IPV4)
         assert result == "192.0.2.1"
 
@@ -224,13 +218,15 @@ class TestBGPMessageParser:
 
     def test_parse_bgp_message_parse_error(self, bgp_parser):
         """Test handling ParseError during BGP message parsing."""
-        with patch('src.bmp.bgp_parser.validate_data_length', side_effect=ParseError("Test error")):
+        with patch("src.bmp.bgp_parser.validate_data_length", side_effect=ParseError("Test error")):
             result = bgp_parser.parse_bgp_message(b"\xff" * 19)
             assert result is None
 
     def test_parse_bgp_message_unexpected_error(self, bgp_parser):
         """Test handling unexpected error during BGP message parsing."""
-        with patch('src.bmp.bgp_parser.safe_struct_unpack', side_effect=Exception("Unexpected error")):
+        with patch(
+            "src.bmp.bgp_parser.safe_struct_unpack", side_effect=Exception("Unexpected error")
+        ):
             result = bgp_parser.parse_bgp_message(b"\xff" * 19)
             assert result is None
 
@@ -244,7 +240,9 @@ class TestBGPMessageParser:
 
     def test_parse_path_attributes_with_next_hop(self, bgp_parser):
         """Test parsing path attributes with NEXT_HOP."""
-        next_hop_attr = struct.pack(">BBB", 0x40, BGPAttributeType.NEXT_HOP, 4) + struct.pack(">I", 0xc0000201)
+        next_hop_attr = struct.pack(">BBB", 0x40, BGPAttributeType.NEXT_HOP, 4) + struct.pack(
+            ">I", 0xC0000201
+        )
         result = bgp_parser._parse_path_attributes(next_hop_attr)
         assert len(result) == 1
         assert result[0]["type"] == "NEXT_HOP"

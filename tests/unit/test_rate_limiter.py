@@ -153,12 +153,16 @@ class TestRateLimiter:
 
         allowed = await limiter.check_message_allowed(ip, count=3)
         assert allowed is True
-        assert abs(limiter.message_tokens[ip] - 2.0) < 0.1  # 5 - 3, allowing for floating point precision
+        assert (
+            abs(limiter.message_tokens[ip] - 2.0) < 0.1
+        )  # 5 - 3, allowing for floating point precision
 
         # Should deny request for more tokens than available
         allowed = await limiter.check_message_allowed(ip, count=5)
         assert allowed is False
-        assert abs(limiter.message_tokens[ip] - 2.0) < 0.1  # Unchanged, allowing for floating point precision
+        assert (
+            abs(limiter.message_tokens[ip] - 2.0) < 0.1
+        )  # Unchanged, allowing for floating point precision
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -261,7 +265,9 @@ class TestRateLimiter:
 
         # Verify final state
         assert limiter.connections_per_ip[ip] == 5
-        assert abs(limiter.message_tokens[ip] - 40.0) < 0.1  # 50 - 10, allowing for floating point precision
+        assert (
+            abs(limiter.message_tokens[ip] - 40.0) < 0.1
+        )  # 50 - 10, allowing for floating point precision
 
     @pytest.mark.unit
     def test_get_stats(self):

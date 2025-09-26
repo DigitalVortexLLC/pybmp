@@ -39,7 +39,7 @@ def validate_prefix(prefix: Any) -> Optional[str]:
     """Validate and return network prefix if valid."""
     try:
         # Only accept string input and must contain '/'
-        if not isinstance(prefix, str) or '/' not in prefix:
+        if not isinstance(prefix, str) or "/" not in prefix:
             return None
         network = ipaddress.ip_network(prefix, strict=False)
         return str(network)
@@ -87,26 +87,26 @@ def sanitize_log_data(data: Any, max_len: int = 100) -> str:
 
     # Remove XSS patterns
     xss_patterns = [
-        r'<script.*?>.*?</script>',
-        r'javascript:',
-        r'alert\(',
-        r'<[a-zA-Z][^>]*>',  # Remove HTML tags (must start with letter)
-        r'</[a-zA-Z][^>]*>',  # Remove HTML closing tags
-        r'on\w+\s*=',  # Remove event handlers like onclick=
+        r"<script.*?>.*?</script>",
+        r"javascript:",
+        r"alert\(",
+        r"<[a-zA-Z][^>]*>",  # Remove HTML tags (must start with letter)
+        r"</[a-zA-Z][^>]*>",  # Remove HTML closing tags
+        r"on\w+\s*=",  # Remove event handlers like onclick=
     ]
 
     sanitized = str_data
     for pattern in xss_patterns:
-        sanitized = re.sub(pattern, '', sanitized, flags=re.IGNORECASE | re.DOTALL)
+        sanitized = re.sub(pattern, "", sanitized, flags=re.IGNORECASE | re.DOTALL)
 
     # Remove potential control characters (but keep tabs for readability)
-    sanitized = "".join(char if char.isprintable() or char in '\t' else "?" for char in sanitized)
+    sanitized = "".join(char if char.isprintable() or char in "\t" else "?" for char in sanitized)
 
     # Remove null bytes and other binary data
-    sanitized = sanitized.replace('\x00', '?')
-    sanitized = sanitized.replace('\x01', '?')
-    sanitized = sanitized.replace('\x02', '?')
-    sanitized = sanitized.replace('\x03', '?')
+    sanitized = sanitized.replace("\x00", "?")
+    sanitized = sanitized.replace("\x01", "?")
+    sanitized = sanitized.replace("\x02", "?")
+    sanitized = sanitized.replace("\x03", "?")
 
     if len(sanitized) > max_len:
         return sanitized[:max_len] + "..."

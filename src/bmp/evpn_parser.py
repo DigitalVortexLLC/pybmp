@@ -8,9 +8,14 @@ import logging
 from typing import Dict, Any, Optional
 
 from .parsing_utils import (
-    parse_mpls_label, parse_route_distinguisher, parse_variable_length_ip,
-    parse_ip_prefix, parse_mac_address, safe_struct_unpack, validate_data_length,
-    ParseError
+    parse_mpls_label,
+    parse_route_distinguisher,
+    parse_variable_length_ip,
+    parse_ip_prefix,
+    parse_mac_address,
+    safe_struct_unpack,
+    validate_data_length,
+    ParseError,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,7 @@ class EVPNParser:
                 2: self._parse_mac_ip_advertisement,
                 3: self._parse_inclusive_multicast,
                 4: self._parse_ethernet_segment,
-                5: self._parse_ip_prefix
+                5: self._parse_ip_prefix,
             }
 
             parser_func = parsers.get(route_type)
@@ -54,13 +59,13 @@ class EVPNParser:
                 2: "MAC/IP Advertisement",
                 3: "Inclusive Multicast",
                 4: "Ethernet Segment",
-                5: "IP Prefix"
+                5: "IP Prefix",
             }
             return {
                 "type": route_type,
                 "name": type_names.get(route_type, "Unknown"),
                 "error": str(e),
-                "data": data.hex()
+                "data": data.hex(),
             }
         except Exception as e:
             logger.error(f"Unexpected error parsing EVPN route type {route_type}: {e}")

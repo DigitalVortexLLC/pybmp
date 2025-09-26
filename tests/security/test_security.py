@@ -92,7 +92,9 @@ class TestBufferOverflowProtection:
         """Test parser protection against invalid peer headers."""
         # Create message with insufficient peer header data
         # BMP header (6 bytes) + insufficient peer header data (20 bytes) = 26 bytes total
-        insufficient_data = b"\x03\x00\x00\x00\x1a\x00" + b"X" * 20  # Less than 42 bytes needed for peer header
+        insufficient_data = (
+            b"\x03\x00\x00\x00\x1a\x00" + b"X" * 20
+        )  # Less than 42 bytes needed for peer header
 
         with patch("src.bmp.parser.logger") as mock_logger:
             result = bmp_parser.parse_message(insufficient_data)

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class AFI(IntEnum):
     """Address Family Identifier values."""
+
     IPV4 = 1
     IPV6 = 2
     L2VPN = 25
@@ -25,6 +26,7 @@ class AFI(IntEnum):
 
 class SAFI(IntEnum):
     """Subsequent Address Family Identifier values."""
+
     UNICAST = 1
     MULTICAST = 2
     EVPN = 70
@@ -33,6 +35,7 @@ class SAFI(IntEnum):
 
 class BGPMessageType(IntEnum):
     """BGP message types."""
+
     OPEN = 1
     UPDATE = 2
     NOTIFICATION = 3
@@ -41,6 +44,7 @@ class BGPMessageType(IntEnum):
 
 class BGPAttributeType(IntEnum):
     """BGP path attribute types."""
+
     ORIGIN = 1
     AS_PATH = 2
     NEXT_HOP = 3
@@ -80,10 +84,7 @@ class BGPMessageParser:
             elif msg_type == BGPMessageType.OPEN:
                 return self._parse_bgp_open(data[19:])
             else:
-                return {
-                    "type": self._get_bgp_message_type_name(msg_type),
-                    "length": length
-                }
+                return {"type": self._get_bgp_message_type_name(msg_type), "length": length}
 
         except ParseError as e:
             logger.error(f"Error parsing BGP message: {e}")
@@ -106,7 +107,7 @@ class BGPMessageParser:
         withdrawn_len, offset = safe_struct_unpack(">H", data, offset)
         if withdrawn_len > 0:
             validate_data_length(data, offset + withdrawn_len, "withdrawn routes")
-            withdrawn_data = data[offset:offset + withdrawn_len]
+            withdrawn_data = data[offset : offset + withdrawn_len]
             message["withdrawn"] = self._parse_nlri_prefixes(withdrawn_data)
             offset += withdrawn_len
 
@@ -116,7 +117,7 @@ class BGPMessageParser:
 
         if path_attr_len > 0:
             validate_data_length(data, offset + path_attr_len, "path attributes")
-            attr_data = data[offset:offset + path_attr_len]
+            attr_data = data[offset : offset + path_attr_len]
             attributes = self._parse_path_attributes(attr_data)
             message["path_attributes"] = attributes
             message["attributes"] = attributes  # For backward compatibility
@@ -145,7 +146,7 @@ class BGPMessageParser:
         message["as"] = as_number  # For backward compatibility
         message["as_number"] = as_number  # Keep both
         message["hold_time"], offset = safe_struct_unpack(">H", data, offset)
-        bgp_id = str(ipaddress.IPv4Address(data[offset:offset + 4]))
+        bgp_id = str(ipaddress.IPv4Address(data[offset : offset + 4]))
         message["bgp_identifier"] = bgp_id
         message["bgp_id"] = bgp_id  # For backward compatibility
         offset += 4
@@ -154,7 +155,7 @@ class BGPMessageParser:
         opt_len, offset = safe_struct_unpack(">B", data, offset)
         if opt_len > 0:
             validate_data_length(data, offset + opt_len, "OPEN optional parameters")
-            opt_data = data[offset:offset + opt_len]
+            opt_data = data[offset : offset + opt_len]
             message["capabilities"] = self._parse_capabilities(opt_data)
 
         return message
@@ -188,7 +189,7 @@ class BGPMessageParser:
                 if offset + attr_len > len(data):
                     break
 
-                attr_data = data[offset:offset + attr_len]
+                attr_data = data[offset : offset + attr_len]
                 offset += attr_len
 
                 # Parse specific attribute types
@@ -287,7 +288,7 @@ class BGPMessageParser:
         # Parse next hop
         next_hop_len, offset = safe_struct_unpack(">B", data, offset)
         if next_hop_len > 0 and offset + next_hop_len <= len(data):
-            next_hop_data = data[offset:offset + next_hop_len]
+            next_hop_data = data[offset : offset + next_hop_len]
             result["next_hop"] = self._parse_next_hop(next_hop_data, result["afi"])
             offset += next_hop_len
 
@@ -351,7 +352,7 @@ class BGPMessageParser:
                     break
 
                 # Parse EVPN route using specialized parser
-                route_data = data[offset:offset + route_len]
+                route_data = data[offset : offset + route_len]
                 evpn_route = self.evpn_parser.parse_evpn_route(route_type, route_data)
                 if evpn_route:
                     nlri_list.append(evpn_route)
@@ -384,7 +385,7 @@ class BGPMessageParser:
                 if offset + prefix_bytes > len(data):
                     break
 
-                prefix_data = data[offset:offset + prefix_bytes]
+                prefix_data = data[offset : offset + prefix_bytes]
                 offset += prefix_bytes
 
                 # Pad to 4 bytes for IPv4
@@ -418,7 +419,7 @@ class BGPMessageParser:
                 if offset + prefix_bytes > len(data):
                     break
 
-                prefix_data = data[offset:offset + prefix_bytes]
+                prefix_data = data[offset : offset + prefix_bytes]
                 offset += prefix_bytes
 
                 # Pad to 16 bytes for IPv6
@@ -462,7 +463,7 @@ class BGPMessageParser:
                     break
 
                 if opt_type == 2:  # Capability option
-                    cap_data = data[offset:offset + opt_len]
+                    cap_data = data[offset : offset + opt_len]
                     cap_offset = 0
 
                     while cap_offset < len(cap_data):
@@ -476,12 +477,10 @@ class BGPMessageParser:
                         if cap_offset + cap_len > len(cap_data):
                             break
 
-                        cap_value = cap_data[cap_offset:cap_offset + cap_len]
-                        capabilities.append({
-                            "code": cap_code,
-                            "length": cap_len,
-                            "value": cap_value.hex()
-                        })
+                        cap_value = cap_data[cap_offset : cap_offset + cap_len]
+                        capabilities.append(
+                            {"code": cap_code, "length": cap_len, "value": cap_value.hex()}
+                        )
                         cap_offset += cap_len
 
                 offset += opt_len
@@ -498,6 +497,6 @@ class BGPMessageParser:
             BGPMessageType.OPEN: "OPEN",
             BGPMessageType.UPDATE: "UPDATE",
             BGPMessageType.NOTIFICATION: "NOTIFICATION",
-            BGPMessageType.KEEPALIVE: "KEEPALIVE"
+            BGPMessageType.KEEPALIVE: "KEEPALIVE",
         }
         return type_names.get(msg_type, f"UNKNOWN_{msg_type}")

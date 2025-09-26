@@ -26,9 +26,7 @@ class Settings(BaseSettings):
 
     # Logging settings
     log_level: str = Field(default="INFO")
-    log_format: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    log_format: str = Field(default="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # Metrics settings
     metrics_enabled: bool = Field(default=True)
@@ -39,11 +37,7 @@ class Settings(BaseSettings):
     batch_timeout_seconds: int = Field(default=5)
     worker_threads: int = Field(default=4)
 
-    model_config = ConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False)
 
     @field_validator("log_level")
     @classmethod

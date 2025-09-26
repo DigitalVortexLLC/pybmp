@@ -111,10 +111,9 @@ class TestEndToEndMessageProcessing:
         peers = ["10.0.1.1", "10.0.1.2", "10.0.1.3"]
         for peer_ip in peers:
             for i in range(3):
-                processor.route_buffer.append({
-                    "peer_ip": peer_ip,
-                    "prefix": f"192.{peer_ip.split('.')[2]}.{i}.0/24"
-                })
+                processor.route_buffer.append(
+                    {"peer_ip": peer_ip, "prefix": f"192.{peer_ip.split('.')[2]}.{i}.0/24"}
+                )
 
         # Check route buffer contains routes from all peers
         routes_by_peer = {}
@@ -178,13 +177,13 @@ class TestEndToEndMessageProcessing:
         processor.route_buffer = [
             {"prefix": "10.1.0.0/16", "is_withdrawn": True},
             {"prefix": "10.2.0.0/16", "is_withdrawn": True},
-            {"prefix": "10.3.0.0/16", "is_withdrawn": False}
+            {"prefix": "10.3.0.0/16", "is_withdrawn": False},
         ]
         processor.stats = {
             "routes_processed": 3,
             "withdrawals_processed": 2,
             "messages_processed": 4,
-            "errors": 0
+            "errors": 0,
         }
 
         reader = AsyncMock()
