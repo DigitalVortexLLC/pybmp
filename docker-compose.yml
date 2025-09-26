@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: bmp-timescaledb
+    environment:
+      POSTGRES_DB: bmp_collector
+      POSTGRES_USER: bmp_user
+      POSTGRES_PASSWORD: changeme
+      TS_TUNE_MAX_CONNS: 200
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bmp_user -d bmp_collector"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bmp_network
+
+  bmp-collector:
+    build: .
+    container_name: bmp-collector
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_NAME: bmp_collector
+      DB_USER: bmp_user
+      DB_PASSWORD: changeme
+      BMP_LISTEN_HOST: 0.0.0.0
+      BMP_LISTEN_PORT: 11019
+      DATA_RETENTION_DAYS: 90
+      LOG_LEVEL: INFO
+      METRICS_PORT: 9090
+    ports:
+      - "11019:11019"  # BMP port
+      - "9090:9090"    # Metrics port
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - bmp_network
+    restart: unless-stopped
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bmp-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - bmp_network
+    depends_on:
+      - timescaledb
+
+volumes:
+  timescale_data:
+  grafana_data:
+
+networks:
+  bmp_network:
+    driver: bridge

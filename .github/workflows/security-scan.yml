@@ -1,0 +1,310 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run every day at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+
+jobs:
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: '1.6.1'
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Run Bandit security linter
+      run: |
+        poetry run bandit -r src/ -f json -o bandit-report.json
+        poetry run bandit -r src/ -f txt
+      continue-on-error: true
+
+    - name: Run Safety check for known vulnerabilities
+      run: |
+        poetry run safety check --json --output safety-report.json
+        poetry run safety check
+      continue-on-error: true
+
+    - name: Run pip-audit for dependency vulnerabilities
+      run: |
+        poetry export -f requirements.txt --output requirements.txt
+        poetry run pip-audit --requirement requirements.txt --format json --output pip-audit-report.json
+        poetry run pip-audit --requirement requirements.txt
+      continue-on-error: true
+
+    - name: Run Semgrep static analysis
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/python
+        generateSarif: "1"
+      continue-on-error: true
+
+    - name: Upload Semgrep results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: semgrep.sarif
+
+    - name: Create security summary
+      if: always()
+      run: |
+        echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Bandit (Security Linting)" >> $GITHUB_STEP_SUMMARY
+        if [ -f bandit-report.json ]; then
+          BANDIT_ISSUES=$(jq '.results | length' bandit-report.json)
+          echo "- Issues found: $BANDIT_ISSUES" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- No issues found" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Safety (Known Vulnerabilities)" >> $GITHUB_STEP_SUMMARY
+        if [ -f safety-report.json ]; then
+          SAFETY_VULNS=$(jq '. | length' safety-report.json)
+          echo "- Vulnerabilities found: $SAFETY_VULNS" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### pip-audit (Dependency Vulnerabilities)" >> $GITHUB_STEP_SUMMARY
+        if [ -f pip-audit-report.json ]; then
+          PIP_AUDIT_VULNS=$(jq '.vulnerabilities | length' pip-audit-report.json)
+          echo "- Vulnerabilities found: $PIP_AUDIT_VULNS" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          pip-audit-report.json
+          semgrep.sarif
+
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-extended,security-and-quality
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: '1.6.1'
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
+
+  docker-security-scan:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: pybmp:security-scan
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'pybmp:security-scan'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Grype vulnerability scanner
+      uses: anchore/scan-action@v3
+      with:
+        image: "pybmp:security-scan"
+        fail-build: false
+        output-format: sarif
+        output-file: grype-results.sarif
+
+    - name: Upload Grype scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'grype-results.sarif'
+
+    - name: Run Docker Bench Security
+      run: |
+        docker run --rm --net host --pid host --userns host --cap-add audit_control \
+          -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST \
+          -v /etc:/etc:ro \
+          -v /usr/bin/containerd:/usr/bin/containerd:ro \
+          -v /usr/bin/runc:/usr/bin/runc:ro \
+          -v /usr/lib/systemd:/usr/lib/systemd:ro \
+          -v /var/lib:/var/lib:ro \
+          -v /var/run/docker.sock:/var/run/docker.sock:ro \
+          --label docker_bench_security \
+          docker/docker-bench-security > docker-bench-security.log
+      continue-on-error: true
+
+    - name: Upload Docker security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: docker-security-reports
+        path: |
+          trivy-results.sarif
+          grype-results.sarif
+          docker-bench-security.log
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+    - name: Run GitLeaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
+
+  notify-security-issues:
+    name: Notify Security Issues
+    runs-on: ubuntu-latest
+    needs: [security-scan, codeql-analysis, docker-security-scan, secrets-scan]
+    if: failure()
+
+    steps:
+    - name: Create security issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const title = `Security vulnerabilities detected - ${new Date().toISOString().split('T')[0]}`;
+          const body = `
+          ## Security Scan Results
+
+          One or more security scans have detected issues in the repository.
+
+          **Failed Jobs:**
+          - Security Scan: ${{ needs.security-scan.result }}
+          - CodeQL Analysis: ${{ needs.codeql-analysis.result }}
+          - Docker Security Scan: ${{ needs.docker-security-scan.result }}
+          - Secrets Scan: ${{ needs.secrets-scan.result }}
+
+          **Action Required:**
+          1. Review the security scan results in the GitHub Security tab
+          2. Address any high or critical severity vulnerabilities
+          3. Update dependencies if necessary
+          4. Review and remediate any secret exposures
+
+          **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          `;
+
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['security', 'automated'],
+            state: 'open'
+          });
+
+          const existingIssue = issues.data.find(issue =>
+            issue.title.includes('Security vulnerabilities detected')
+          );
+
+          if (!existingIssue) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'automated', 'bug']
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              body: `Security scan failed again on ${new Date().toISOString().split('T')[0]}. Please review: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            });
+          }
