@@ -1,8 +1,9 @@
 """Unit tests for rate limiter."""
-import pytest
 import asyncio
 import time
 from unittest.mock import patch
+
+import pytest
 
 from src.utils.rate_limiter import RateLimiter
 
@@ -246,28 +247,32 @@ class TestRateLimiter:
         limiter = RateLimiter(max_connections_per_ip=10, burst_size=50)
         ip = "192.0.2.1"
 
-        async def connection_worker():
-            return await limiter.check_connection_allowed(ip)
+        # Mock time to prevent token refilling during test
+        with patch("src.utils.rate_limiter.time.time") as mock_time:
+            mock_time.return_value = 1000.0  # Fixed time
 
-        async def message_worker():
-            return await limiter.check_message_allowed(ip)
+            async def connection_worker():
+                return await limiter.check_connection_allowed(ip)
 
-        # Run concurrent operations
-        connection_tasks = [connection_worker() for _ in range(5)]
-        message_tasks = [message_worker() for _ in range(10)]
+            async def message_worker():
+                return await limiter.check_message_allowed(ip)
 
-        connection_results = await asyncio.gather(*connection_tasks)
-        message_results = await asyncio.gather(*message_tasks)
+            # Run concurrent operations
+            connection_tasks = [connection_worker() for _ in range(5)]
+            message_tasks = [message_worker() for _ in range(10)]
 
-        # All should succeed (within limits)
-        assert all(connection_results)
-        assert all(message_results)
+            connection_results = await asyncio.gather(*connection_tasks)
+            message_results = await asyncio.gather(*message_tasks)
 
-        # Verify final state
-        assert limiter.connections_per_ip[ip] == 5
-        assert (
-            abs(limiter.message_tokens[ip] - 40.0) < 0.1
-        )  # 50 - 10, allowing for floating point precision
+            # All should succeed (within limits)
+            assert all(connection_results)
+            assert all(message_results)
+
+            # Verify final state
+            assert limiter.connections_per_ip[ip] == 5
+            assert (
+                abs(limiter.message_tokens[ip] - 40.0) < 0.1
+            )  # 50 - 10, allowing for floating point precision
 
     @pytest.mark.unit
     def test_get_stats(self):
@@ -301,6 +306,21 @@ class TestRateLimiter:
         assert stats["active_connections"] == {}
         assert stats["total_ips"] == 0
         assert stats["max_connections"] == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_message_allowed_invalid_count(self):
+        """Test check_message_allowed with invalid count parameter."""
+        limiter = RateLimiter()
+        ip = "192.0.2.1"
+
+        # Test with negative count
+        with pytest.raises(TypeError, match="Count must be a non-negative integer"):
+            await limiter.check_message_allowed(ip, -1)
+
+        # Test with non-integer count
+        with pytest.raises(TypeError, match="Count must be a non-negative integer"):
+            await limiter.check_message_allowed(ip, "invalid")
 
 
 class TestRateLimiterEdgeCases:

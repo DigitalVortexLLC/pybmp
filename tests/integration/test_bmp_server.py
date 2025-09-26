@@ -1,12 +1,13 @@
 """Integration tests for BMP server functionality."""
-import pytest
 import asyncio
 import struct
-from unittest.mock import AsyncMock, Mock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.bmp.server import BMPServer, BMPSession
+import pytest
+
 from src.bmp.processor import RouteProcessor
+from src.bmp.server import BMPServer, BMPSession
 from tests.fixtures.bmp_messages import TEST_MESSAGES, BMPMessageBuilder
 
 

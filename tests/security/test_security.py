@@ -1,20 +1,21 @@
 """Security tests for BMP collector."""
-import pytest
-import struct
 import asyncio
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
+import struct
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from src.bmp.server import BMPSession, BMPServer
-from src.bmp.processor import RouteProcessor
+import pytest
+
 from src.bmp.parser import BMPParser
+from src.bmp.processor import RouteProcessor
+from src.bmp.server import BMPServer, BMPSession
 from src.database.connection import DatabasePool
 from src.utils.rate_limiter import RateLimiter
 from src.utils.validation import (
+    sanitize_log_data,
     validate_as_number,
     validate_ip_address,
     validate_prefix,
-    sanitize_log_data,
 )
 
 

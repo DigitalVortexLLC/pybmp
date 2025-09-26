@@ -112,7 +112,7 @@ python run_tests.py --mode clean
 ### Pytest Configuration (`pytest.ini`)
 
 The test suite is configured with:
-- **Coverage**: Minimum 85% coverage requirement
+- **Coverage**: Minimum 80% coverage requirement
 - **Markers**: Unit, integration, security, slow, database markers
 - **Output**: JUnit XML, HTML reports, and coverage reports
 - **Async**: Automatic async test detection
@@ -228,7 +228,7 @@ The test suite integrates with GitHub Actions for:
 
 ## Coverage Requirements
 
-- **Unit Tests**: Minimum 85% coverage
+- **Unit Tests**: Minimum 80% coverage
 - **Integration Tests**: Focus on workflow coverage
 - **Security Tests**: Focus on vulnerability coverage
 - **Overall**: Minimum 80% combined coverage

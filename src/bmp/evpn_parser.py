@@ -5,17 +5,17 @@ methods for each type, eliminating the complexity of the original monolithic par
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from .parsing_utils import (
+    ParseError,
+    parse_ip_prefix,
+    parse_mac_address,
     parse_mpls_label,
     parse_route_distinguisher,
     parse_variable_length_ip,
-    parse_ip_prefix,
-    parse_mac_address,
     safe_struct_unpack,
     validate_data_length,
-    ParseError,
 )
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 """Database test fixtures and mock data."""
-from datetime import datetime, timedelta, UTC
-from typing import List, Dict, Any
 import random
+from datetime import UTC, datetime, timedelta
+from typing import Any, Dict, List
 
 
 def generate_mock_route_data(count: int = 100) -> List[Dict[str, Any]]:

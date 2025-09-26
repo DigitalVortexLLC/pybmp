@@ -1,6 +1,6 @@
 """Test fixtures package."""
 
-from .bmp_messages import BMPMessageBuilder, TEST_MESSAGES, INVALID_MESSAGES
+from .bmp_messages import INVALID_MESSAGES, TEST_MESSAGES, BMPMessageBuilder
 from .database_fixtures import generate_mock_route_data
 
 __all__ = ["BMPMessageBuilder", "TEST_MESSAGES", "INVALID_MESSAGES", "generate_mock_route_data"]

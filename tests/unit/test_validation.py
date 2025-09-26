@@ -1,14 +1,15 @@
 """Unit tests for validation utilities."""
-import pytest
 import ipaddress
 
+import pytest
+
 from src.utils.validation import (
+    sanitize_log_data,
     validate_as_number,
     validate_ip_address,
-    validate_prefix,
     validate_message_length,
     validate_port,
-    sanitize_log_data,
+    validate_prefix,
 )
 
 
@@ -268,6 +269,7 @@ class TestValidatePort:
             None,  # None value
             [],  # Invalid type
             float("inf"),  # Infinity
+            float("nan"),  # NaN
         ],
     )
     def test_invalid_ports(self, port):

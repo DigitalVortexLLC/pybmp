@@ -1,10 +1,11 @@
 """Unit tests for BMP parser."""
-import pytest
 import struct
 from unittest.mock import patch
 
-from src.bmp.parser import BMPParser, BMPMessageType, BMPPeerType, BGPMessageType, AFI, SAFI
-from tests.fixtures.bmp_messages import BMPMessageBuilder, TEST_MESSAGES, INVALID_MESSAGES
+import pytest
+
+from src.bmp.parser import AFI, SAFI, BGPMessageType, BMPMessageType, BMPParser, BMPPeerType
+from tests.fixtures.bmp_messages import INVALID_MESSAGES, TEST_MESSAGES, BMPMessageBuilder
 
 
 class TestBMPParser:
@@ -1065,3 +1066,149 @@ class TestBMPParserEdgeCases:
         assert "rd" not in result
         assert "esi" not in result
         assert "eth_tag" not in result
+
+    @pytest.mark.unit
+    def test_parse_per_peer_header_ipv4_mapped_extraction(self, bmp_parser):
+        """Test per-peer header with IPv4-mapped IPv6 that extracts IPv4."""
+        # Create header with IPv4-mapped IPv6 address (::ffff:192.0.2.1)
+        header_data = struct.pack(">B", 0)  # Peer type
+        header_data += struct.pack(">B", 0x80)  # IPv6 flag set
+        header_data += struct.pack(">Q", 0)  # Peer Distinguisher (8 bytes)
+        # IPv4-mapped IPv6: ::ffff:192.0.2.1
+        ipv4_mapped = b"\x00" * 10 + b"\xff\xff" + struct.pack(">I", 0xC0000201)
+        header_data += ipv4_mapped
+        header_data += struct.pack(">I", 65001)  # Peer AS
+        header_data += struct.pack(">I", 0xC0000201)  # Peer BGP ID
+        header_data += struct.pack(">I", 1234567890)  # Timestamp seconds
+        header_data += struct.pack(">I", 0)  # Timestamp microseconds
+
+        result, offset = bmp_parser._parse_per_peer_header(header_data)
+
+        assert result is not None
+        assert result["peer_ip"] == "192.0.2.1"  # Should extract IPv4 from mapped
+
+    @pytest.mark.unit
+    def test_parse_per_peer_header_pure_ipv6(self, bmp_parser):
+        """Test per-peer header with pure IPv6 address."""
+        # Create header with pure IPv6 address (2001:db8::1)
+        header_data = struct.pack(">B", 0)  # Peer type
+        header_data += struct.pack(">B", 0x80)  # IPv6 flag set
+        header_data += struct.pack(">Q", 0)  # Peer Distinguisher (8 bytes)
+        # Pure IPv6: 2001:db8::1
+        ipv6_addr = bytes(
+            [
+                0x20,
+                0x01,
+                0x0D,
+                0xB8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+            ]
+        )
+        header_data += ipv6_addr
+        header_data += struct.pack(">I", 65001)  # Peer AS
+        header_data += struct.pack(">I", 0xC0000201)  # Peer BGP ID
+        header_data += struct.pack(">I", 1234567890)  # Timestamp seconds
+        header_data += struct.pack(">I", 0)  # Timestamp microseconds
+
+        result, offset = bmp_parser._parse_per_peer_header(header_data)
+
+        assert result is not None
+        assert result["peer_ip"] == "2001:db8::1"
+
+    @pytest.mark.unit
+    def test_parse_peer_up_local_ipv4_mapped(self, bmp_parser):
+        """Test peer up with IPv4-mapped local address."""
+        # Create minimal per-peer header
+        per_peer_header = struct.pack(">B", 0x80)  # IPv6 flag
+        per_peer_header += b"\x00" * 31  # Rest of header
+
+        # IPv4-mapped IPv6 local address
+        ipv4_mapped_local = b"\x00" * 10 + b"\xff\xff" + struct.pack(">I", 0xC0000202)  # 192.0.2.2
+        remote_addr = struct.pack(">I", 0xC0000203)  # 192.0.2.3 IPv4
+        remote_addr += b"\x00" * 12  # Padding to 16 bytes
+
+        peer_up_data = ipv4_mapped_local + remote_addr
+        peer_up_data += struct.pack(">HH", 179, 179)  # Local and remote ports
+        peer_up_data += b"\x00" * 20  # Minimal BGP messages
+
+        full_data = per_peer_header + peer_up_data
+        # Create full BMP message with header
+        bmp_header = struct.pack(">BBBBB", 3, 0, 0, 0, len(full_data) + 6)  # Version 3, message type 3
+        bmp_header += struct.pack(">B", 3)  # Peer Up message type
+        complete_message = bmp_header + full_data
+        result = bmp_parser.parse_bmp_message(complete_message)
+
+        assert result is not None
+        assert result["type"] == 3
+
+    @pytest.mark.unit
+    def test_parse_initiation_message_with_multiple_tlvs(self, bmp_parser):
+        """Test initiation message with multiple TLVs."""
+        # Create initiation message with multiple information TLVs
+        tlv_data = struct.pack(">HH", 1, 4) + b"test"  # Type=1, Length=4, Value="test"
+        tlv_data += struct.pack(">HH", 2, 6) + b"value2"  # Type=2, Length=6, Value="value2"
+
+        result = bmp_parser.parse_bmp_message(4, tlv_data)
+
+        assert result is not None
+        assert result["type"] == 4
+        assert len(result["information"]) == 2
+
+    @pytest.mark.unit
+    def test_parse_termination_message_with_tlvs(self, bmp_parser):
+        """Test termination message with TLVs."""
+        # Create termination message with information TLVs
+        tlv_data = struct.pack(">HH", 0, 8) + b"reason12"  # Type=0, Length=8
+
+        result = bmp_parser.parse_bmp_message(5, tlv_data)
+
+        assert result is not None
+        assert result["type"] == 5
+        assert len(result["information"]) == 1
+
+    @pytest.mark.unit
+    def test_parse_stats_report_with_multiple_stats(self, bmp_parser):
+        """Test stats report with multiple statistics."""
+        # Create minimal per-peer header
+        per_peer_header = b"\x00" * 32
+
+        # Stats data with multiple statistics
+        stats_data = struct.pack(">I", 2)  # Count = 2
+        # Stat 1
+        stats_data += struct.pack(">HI", 0, 100)  # Type=0, Length=4, Value=100
+        # Stat 2
+        stats_data += struct.pack(">HI", 1, 200)  # Type=1, Length=4, Value=200
+
+        full_data = per_peer_header + stats_data
+        result = bmp_parser.parse_bmp_message(1, full_data)
+
+        assert result is not None
+        assert result["type"] == 1
+        assert len(result["statistics"]) == 2
+
+    @pytest.mark.unit
+    def test_parse_route_mirroring_with_multiple_tlvs(self, bmp_parser):
+        """Test route mirroring with multiple TLVs."""
+        # Create minimal per-peer header
+        per_peer_header = b"\x00" * 32
+
+        # Multiple TLVs
+        tlv_data = struct.pack(">HH", 0, 4) + b"mir1"  # Type=0, Length=4
+        tlv_data += struct.pack(">HH", 1, 4) + b"mir2"  # Type=1, Length=4
+
+        full_data = per_peer_header + tlv_data
+        result = bmp_parser.parse_bmp_message(6, full_data)
+
+        assert result is not None
+        assert result["type"] == 6

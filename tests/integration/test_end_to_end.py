@@ -1,14 +1,15 @@
 """End-to-end message processing tests."""
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, Mock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.bmp.server import BMPServer, BMPSession
-from src.bmp.processor import RouteProcessor
+import pytest
+
 from src.bmp.parser import BMPParser
+from src.bmp.processor import RouteProcessor
+from src.bmp.server import BMPServer, BMPSession
 from src.database.connection import DatabasePool
-from tests.fixtures.bmp_messages import BMPMessageBuilder, TEST_MESSAGES
+from tests.fixtures.bmp_messages import TEST_MESSAGES, BMPMessageBuilder
 
 
 class TestEndToEndMessageProcessing:

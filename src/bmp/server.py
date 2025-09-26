@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from typing import Dict, Optional, Set
 from datetime import datetime, timezone
+from typing import Dict, Optional, Set
 
 from src.bmp.parser import BMPParser
 from src.bmp.processor import RouteProcessor

@@ -4,10 +4,10 @@ This module contains reusable parsing functions that eliminate code duplication
 and provide consistent parsing behavior across different message types.
 """
 
-import struct
 import ipaddress
 import logging
-from typing import Dict, Any, Tuple, Optional
+import struct
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

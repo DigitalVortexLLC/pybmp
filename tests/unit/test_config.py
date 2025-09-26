@@ -1,7 +1,8 @@
 """Unit tests for configuration management."""
-import pytest
 import os
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
+import pytest
 from pydantic import ValidationError
 
 from src.utils.config import Settings, get_settings

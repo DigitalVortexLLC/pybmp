@@ -4,14 +4,14 @@ This module handles parsing of BMP-specific messages like PEER_UP, PEER_DOWN,
 INITIATION, TERMINATION, and STATS_REPORT.
 """
 
-import struct
 import ipaddress
 import logging
-from typing import Dict, Any, Optional, Tuple, List
+import struct
 from enum import IntEnum
+from typing import Any, Dict, List, Optional, Tuple
 
-from .parsing_utils import safe_struct_unpack, validate_data_length, ParseError
 from .bgp_parser import BGPMessageParser
+from .parsing_utils import ParseError, safe_struct_unpack, validate_data_length
 
 logger = logging.getLogger(__name__)
 

@@ -1,16 +1,17 @@
 """Integration tests for database operations."""
-import pytest
 import asyncio
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
+
 import asyncpg
+import pytest
 
 from src.database.connection import DatabasePool
 from tests.fixtures.database_fixtures import (
+    EDGE_CASE_DATA,
     generate_mock_route_data,
     generate_mock_session_data,
     generate_mock_stats_data,
-    EDGE_CASE_DATA,
 )
 
 

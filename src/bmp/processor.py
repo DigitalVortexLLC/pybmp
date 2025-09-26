@@ -1,9 +1,9 @@
 import asyncio
+import ipaddress
 import json
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-import ipaddress
+from typing import Any, Dict, List, Optional
 
 from src.bmp.parser import AFI, SAFI
 

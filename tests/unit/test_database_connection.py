@@ -1,16 +1,17 @@
 """Unit tests for database connection layer."""
-import pytest
 import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch, call
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 
 from src.database.connection import DatabasePool
 from tests.fixtures.database_fixtures import (
+    EDGE_CASE_DATA,
+    MOCK_DB_RESPONSES,
     generate_mock_route_data,
     generate_mock_session_data,
-    MOCK_DB_RESPONSES,
-    EDGE_CASE_DATA,
 )
 
 

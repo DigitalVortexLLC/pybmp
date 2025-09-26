@@ -1,18 +1,20 @@
 """Pytest configuration and shared fixtures."""
 import asyncio
-import pytest
 import os
-import tempfile
 import shutil
-from typing import Dict, Any, AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock
+import tempfile
 from datetime import datetime
+from typing import Any, AsyncGenerator, Dict
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from src.bmp.parser import BMPParser
+from src.bmp.processor import RouteProcessor
+from src.database.connection import DatabasePool
 
 # Import application modules
 from src.utils.config import Settings
-from src.database.connection import DatabasePool
-from src.bmp.parser import BMPParser
-from src.bmp.processor import RouteProcessor
 
 
 @pytest.fixture(scope="session")

@@ -5,15 +5,15 @@ It maintains the same public interface for backward compatibility while
 delegating to specialized parser classes internally.
 """
 
-import struct
 import logging
-from typing import Dict, Any, Optional, List, Tuple
+import struct
 from enum import IntEnum
+from typing import Any, Dict, List, Optional, Tuple
 
-from .parsing_utils import safe_struct_unpack, validate_data_length, ParseError
-from .bgp_parser import BGPMessageParser, AFI, SAFI
+from .bgp_parser import AFI, SAFI, BGPMessageParser
 from .bmp_message_parser import BMPMessageParser, BMPMessageType
 from .evpn_parser import EVPNParser
+from .parsing_utils import ParseError, safe_struct_unpack, validate_data_length
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,13 @@
 """Unit tests for route processor."""
-import pytest
 import asyncio
 import json
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.bmp.processor import RouteProcessor
+import pytest
+
 from src.bmp.parser import AFI, SAFI
+from src.bmp.processor import RouteProcessor
 
 
 class TestRouteProcessor:
@@ -538,3 +539,209 @@ class TestRouteProcessor:
         # All messages should be processed without race conditions
         assert route_processor.stats["messages_processed"] == 10
         assert len(route_processor.route_buffer) == 10
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_non_update_bgp_message(self, route_processor):
+        """Test processing route monitoring with non-UPDATE BGP message (line 58)."""
+        router_ip = "192.0.2.100"
+        message = {
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
+            },
+            "bgp_message": {"type": "KEEPALIVE"},  # Non-UPDATE message
+        }
+
+        await route_processor.process_message(message, router_ip)
+
+        # Should process message but not add any routes
+        assert route_processor.stats["messages_processed"] == 1
+        assert len(route_processor.route_buffer) == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_invalid_as_number(self, route_processor):
+        """Test processing with invalid AS number (lines 67-68)."""
+        router_ip = "192.0.2.100"
+        message = {
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": "invalid_as",  # Invalid AS number
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
+            },
+            "bgp_message": {"type": "UPDATE", "nlri": ["10.0.1.0/24"]},
+        }
+
+        with patch("src.bmp.processor.logger") as mock_logger:
+            await route_processor.process_message(message, router_ip)
+
+        # Should log warning and skip processing
+        mock_logger.warning.assert_called_once()
+        assert "Invalid AS number" in str(mock_logger.warning.call_args)
+        assert len(route_processor.route_buffer) == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_withdrawn_routes(self, route_processor):
+        """Test processing withdrawn routes (lines 76-80)."""
+        router_ip = "192.0.2.100"
+        message = {
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
+            },
+            "bgp_message": {"type": "UPDATE", "withdrawn": ["10.0.1.0/24", "10.0.2.0/24"]},
+        }
+
+        await route_processor.process_message(message, router_ip)
+
+        # Should process withdrawals
+        assert route_processor.stats["messages_processed"] == 1
+        assert route_processor.stats["withdrawals_processed"] == 2
+        assert len(route_processor.route_buffer) == 2
+        assert all(route["is_withdrawn"] for route in route_processor.route_buffer)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_aggregator_attribute(self, route_processor):
+        """Test processing aggregator attribute (lines 273-274)."""
+        router_ip = "192.0.2.100"
+        message = {
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
+            },
+            "bgp_message": {
+                "type": "UPDATE",
+                "nlri": ["10.0.1.0/24"],
+                "attributes": [
+                    {"type": 7, "value": {"as": 65002, "ip": "192.0.2.10"}}  # AGGREGATOR
+                ],
+            },
+        }
+
+        await route_processor.process_message(message, router_ip)
+
+        # Should process aggregator
+        assert len(route_processor.route_buffer) == 1
+        route = route_processor.route_buffer[0]
+        assert route["aggregator_as"] == 65002
+        assert route["aggregator_ip"] == "192.0.2.10"
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_parse_atomic_aggregate_attribute(self, route_processor):
+        """Test parsing atomic aggregate attribute (line 353)."""
+        attributes = [
+            {"type": 6, "value": True},  # ATOMIC_AGGREGATE
+        ]
+
+        parsed = route_processor._parse_attributes(attributes)
+        assert parsed["atomic_aggregate"] is True
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_parse_originator_id_attribute(self, route_processor):
+        """Test parsing originator ID attribute (line 359)."""
+        attributes = [
+            {"type": 9, "value": "192.0.2.100"},  # ORIGINATOR_ID
+        ]
+
+        parsed = route_processor._parse_attributes(attributes)
+        assert parsed["originator_id"] == "192.0.2.100"
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_parse_cluster_list_attribute(self, route_processor):
+        """Test parsing cluster list attribute (line 361)."""
+        attributes = [
+            {"type": 10, "value": ["192.0.2.1", "192.0.2.2"]},  # CLUSTER_LIST
+        ]
+
+        parsed = route_processor._parse_attributes(attributes)
+        assert parsed["cluster_list"] == ["192.0.2.1", "192.0.2.2"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_parse_extended_communities_attribute(self, route_processor):
+        """Test parsing extended communities attribute (line 367)."""
+        attributes = [
+            {"type": 16, "value": ["RT:65001:100"]},  # EXTENDED_COMMUNITIES
+        ]
+
+        parsed = route_processor._parse_attributes(attributes)
+        assert parsed["extended_communities"] == ["RT:65001:100"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_parse_large_communities_attribute(self, route_processor):
+        """Test parsing large communities attribute (line 369)."""
+        attributes = [
+            {"type": 32, "value": ["65001:100:200"]},  # LARGE_COMMUNITIES
+        ]
+
+        parsed = route_processor._parse_attributes(attributes)
+        assert parsed["large_communities"] == ["65001:100:200"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_stats_duplicate_prefixes(self, route_processor):
+        """Test stats processing for duplicate prefixes (line 446)."""
+        router_ip = "192.0.2.100"
+        message = {
+            "type": "stats_report",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
+            },
+            "stats": [
+                {"type": 1, "value": 50},  # Duplicate prefix count
+            ],
+        }
+
+        await route_processor.process_message(message, router_ip)
+
+        # Should call update_statistics with duplicate_prefixes
+        route_processor.db_pool.update_statistics.assert_called_once()
+        call_args = route_processor.db_pool.update_statistics.call_args[0][0]
+        assert call_args["duplicate_prefixes"] == 50
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_evpn_withdrawal(self, route_processor):
+        """Test processing EVPN withdrawal routes (lines 173-175)."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        timestamp = datetime.now(timezone.utc)
+        routes = []
+
+        mp_unreach = {
+            "afi": AFI.L2VPN,
+            "safi": SAFI.EVPN,
+            "withdrawn": [{"type": 2, "name": "MAC/IP Advertisement", "mac": "00:11:22:33:44:55"}],
+        }
+
+        await route_processor._process_mp_unreach(
+            mp_unreach, router_ip, peer_ip, peer_as, timestamp, routes
+        )
+
+        assert len(routes) == 1
+        route = routes[0]
+        assert route["is_withdrawn"] is True
+        assert route["family"] == "EVPN"
+        assert route["mac_address"] == "00:11:22:33:44:55"
