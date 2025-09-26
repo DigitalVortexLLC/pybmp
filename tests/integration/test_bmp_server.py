@@ -40,7 +40,7 @@ class TestBMPSession:
         processor = RouteProcessor(mock_db_pool)
 
         # Mock reader to return a complete BMP message then EOF
-        test_message = TEST_MESSAGES['route_monitoring']
+        test_message = TEST_MESSAGES["route_monitoring"]
         reader.read.side_effect = [test_message, b""]  # Message then EOF
 
         session = BMPSession(reader, writer, router_ip, processor)
@@ -62,10 +62,10 @@ class TestBMPSession:
 
         # Mock reader to return multiple messages
         messages = [
-            TEST_MESSAGES['initiation'],
-            TEST_MESSAGES['peer_up'],
-            TEST_MESSAGES['route_monitoring'],
-            b""  # EOF
+            TEST_MESSAGES["initiation"],
+            TEST_MESSAGES["peer_up"],
+            TEST_MESSAGES["route_monitoring"],
+            b"",  # EOF
         ]
         reader.read.side_effect = messages
 
@@ -86,7 +86,7 @@ class TestBMPSession:
         processor = RouteProcessor(mock_db_pool)
 
         # Split a message into fragments
-        test_message = TEST_MESSAGES['route_monitoring']
+        test_message = TEST_MESSAGES["route_monitoring"]
         fragment1 = test_message[:20]
         fragment2 = test_message[20:]
 
@@ -109,12 +109,12 @@ class TestBMPSession:
         processor = RouteProcessor(mock_db_pool)
 
         # Create oversized data that would exceed buffer limit
-        oversized_data = b'x' * (BMPSession.MAX_BUFFER_SIZE + 1000)
+        oversized_data = b"x" * (BMPSession.MAX_BUFFER_SIZE + 1000)
         reader.read.side_effect = [oversized_data]
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await session.handle()
 
             # Should log buffer overflow and terminate
@@ -131,12 +131,12 @@ class TestBMPSession:
         processor = RouteProcessor(mock_db_pool)
 
         # Create message with invalid BMP version
-        invalid_message = b'\x99' + b'\x00\x00\x00\x10' + b'\x00' + b'test'
+        invalid_message = b"\x99" + b"\x00\x00\x00\x10" + b"\x00" + b"test"
         reader.read.side_effect = [invalid_message, b""]
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await session.handle()
 
             # Should log warning and skip the invalid byte
@@ -157,7 +157,7 @@ class TestBMPSession:
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await session.handle()
 
             # Should log error and clear buffer
@@ -197,7 +197,7 @@ class TestBMPSession:
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await session.handle()
 
             # Should log error and handle gracefully
@@ -228,13 +228,13 @@ class TestBMPServer:
         # Mock asyncio.start_server
         mock_server = AsyncMock()
         mock_server.sockets = [AsyncMock()]
-        mock_server.sockets[0].getsockname.return_value = ('127.0.0.1', 11019)
+        mock_server.sockets[0].getsockname.return_value = ("127.0.0.1", 11019)
         mock_server.serve_forever = AsyncMock()
         mock_server.close = AsyncMock()
         mock_server.wait_closed = AsyncMock()
 
-        with patch('asyncio.start_server', return_value=mock_server):
-            with patch('asyncio.create_task') as mock_create_task:
+        with patch("asyncio.start_server", return_value=mock_server):
+            with patch("asyncio.create_task") as mock_create_task:
                 mock_task = AsyncMock()
                 mock_create_task.return_value = mock_task
 
@@ -266,10 +266,10 @@ class TestBMPServer:
 
         reader = AsyncMock()
         writer = AsyncMock()
-        writer.get_extra_info.return_value = ('192.0.2.1', 12345)
+        writer.get_extra_info.return_value = ("192.0.2.1", 12345)
 
         # Mock session handling
-        with patch.object(BMPSession, 'handle') as mock_handle:
+        with patch.object(BMPSession, "handle") as mock_handle:
             mock_handle.return_value = asyncio.create_task(asyncio.sleep(0))
 
             await server._handle_client(reader, writer)
@@ -285,15 +285,15 @@ class TestBMPServer:
         server = BMPServer(test_settings, mock_db_pool)
 
         # Add existing session to reach limit
-        server.sessions['192.0.2.1'] = AsyncMock()
+        server.sessions["192.0.2.1"] = AsyncMock()
 
         reader = AsyncMock()
         writer = AsyncMock()
-        writer.get_extra_info.return_value = ('192.0.2.2', 12345)
+        writer.get_extra_info.return_value = ("192.0.2.2", 12345)
         writer.close = AsyncMock()
         writer.wait_closed = AsyncMock()
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await server._handle_client(reader, writer)
 
             # Should reject connection and log warning
@@ -311,13 +311,13 @@ class TestBMPServer:
 
         # Mock processor stats
         server.processor.get_stats.return_value = {
-            'messages_processed': 100,
-            'routes_processed': 500,
-            'withdrawals_processed': 25,
-            'errors': 2
+            "messages_processed": 100,
+            "routes_processed": 500,
+            "withdrawals_processed": 25,
+            "errors": 2,
         }
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             # Run flush for a short time
             flush_task = asyncio.create_task(server._periodic_flush())
             await asyncio.sleep(0.05)  # Let it run briefly
@@ -344,7 +344,7 @@ class TestBMPServer:
         # Mock cleanup result
         mock_db_pool.cleanup_old_data.return_value = 150
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             # Run cleanup for a short time
             cleanup_task = asyncio.create_task(server._periodic_cleanup())
             await asyncio.sleep(0.01)  # Let it run briefly
@@ -375,16 +375,16 @@ class TestBMPServer:
         session2.last_message = datetime(2024, 1, 1, 13, 15, 0)
         session2.messages_received = 50
 
-        server.sessions['192.0.2.1'] = session1
-        server.sessions['192.0.2.2'] = session2
+        server.sessions["192.0.2.1"] = session1
+        server.sessions["192.0.2.2"] = session2
 
         sessions_info = server.get_active_sessions()
 
         assert len(sessions_info) == 2
-        assert '192.0.2.1' in sessions_info
-        assert '192.0.2.2' in sessions_info
-        assert sessions_info['192.0.2.1']['messages_received'] == 100
-        assert sessions_info['192.0.2.2']['messages_received'] == 50
+        assert "192.0.2.1" in sessions_info
+        assert "192.0.2.2" in sessions_info
+        assert sessions_info["192.0.2.1"]["messages_received"] == 100
+        assert sessions_info["192.0.2.2"]["messages_received"] == 50
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -394,17 +394,17 @@ class TestBMPServer:
 
         reader = AsyncMock()
         writer = AsyncMock()
-        writer.get_extra_info.return_value = ('192.0.2.1', 12345)
+        writer.get_extra_info.return_value = ("192.0.2.1", 12345)
 
         # Mock session to raise exception
-        with patch.object(BMPSession, 'handle') as mock_handle:
+        with patch.object(BMPSession, "handle") as mock_handle:
             mock_handle.side_effect = Exception("Session error")
 
-            with patch('src.bmp.server.logger'):
+            with patch("src.bmp.server.logger"):
                 await server._handle_client(reader, writer)
 
             # Session should be cleaned up even after error
-            assert '192.0.2.1' not in server.sessions
+            assert "192.0.2.1" not in server.sessions
 
 
 class TestBMPServerIntegrationScenarios:
@@ -421,13 +421,13 @@ class TestBMPServerIntegrationScenarios:
 
         # Simulate realistic message sequence
         messages = [
-            TEST_MESSAGES['initiation'],
-            TEST_MESSAGES['peer_up'],
-            TEST_MESSAGES['route_monitoring'],
-            TEST_MESSAGES['stats_report'],
-            TEST_MESSAGES['peer_down'],
-            TEST_MESSAGES['termination'],
-            b""  # EOF
+            TEST_MESSAGES["initiation"],
+            TEST_MESSAGES["peer_up"],
+            TEST_MESSAGES["route_monitoring"],
+            TEST_MESSAGES["stats_report"],
+            TEST_MESSAGES["peer_down"],
+            TEST_MESSAGES["termination"],
+            b"",  # EOF
         ]
         reader.read.side_effect = messages
 
@@ -454,10 +454,10 @@ class TestBMPServerIntegrationScenarios:
         for i in range(3):
             reader = AsyncMock()
             writer = AsyncMock()
-            writer.get_extra_info.return_value = (f'192.0.2.{i+1}', 12345)
+            writer.get_extra_info.return_value = (f"192.0.2.{i+1}", 12345)
 
             # Each client sends one message then disconnects
-            reader.read.side_effect = [TEST_MESSAGES['route_monitoring'], b""]
+            reader.read.side_effect = [TEST_MESSAGES["route_monitoring"], b""]
             clients.append((reader, writer))
 
         # Handle all clients concurrently
@@ -482,7 +482,7 @@ class TestBMPServerIntegrationScenarios:
 
         # Create a route monitoring message with multiple routes
         route_monitoring = BMPMessageBuilder.create_route_monitoring_message(
-            nlri=['10.0.1.0/24', '10.0.2.0/24', '10.0.3.0/24']
+            nlri=["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
         )
 
         reader.read.side_effect = [route_monitoring, b""]
@@ -514,14 +514,14 @@ class TestBMPServerIntegrationScenarios:
         processor = RouteProcessor(mock_db_pool)
 
         # Mix valid and invalid messages
-        invalid_message = b'\x03' + b'\x00\x00\x00\x08' + b'\x99\x00'  # Invalid message type
-        valid_message = TEST_MESSAGES['route_monitoring']
+        invalid_message = b"\x03" + b"\x00\x00\x00\x08" + b"\x99\x00"  # Invalid message type
+        valid_message = TEST_MESSAGES["route_monitoring"]
 
         reader.read.side_effect = [invalid_message, valid_message, b""]
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger'):
+        with patch("src.bmp.server.logger"):
             await session.handle()
 
         # Should process valid message despite invalid one
@@ -539,9 +539,7 @@ class TestBMPServerIntegrationScenarios:
         # Generate many route monitoring messages
         messages = []
         for i in range(50):  # 50 messages
-            msg = BMPMessageBuilder.create_route_monitoring_message(
-                nlri=[f'10.{i}.0.0/16']
-            )
+            msg = BMPMessageBuilder.create_route_monitoring_message(nlri=[f"10.{i}.0.0/16"])
             messages.append(msg)
         messages.append(b"")  # EOF
 

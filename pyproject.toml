@@ -4,9 +4,65 @@ version = "0.1.0"
 description = "BGP Monitoring Protocol (BMP) collector with TimescaleDB storage"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+# Core dependencies
+asyncio-dgram = "^2.1.2"
+asyncpg = "^0.30.0"
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+python-dotenv = "^1.0.0"
+structlog = "^24.1.0"
+# BGP/BMP parsing
+dpkt = "^1.9.8"
+netaddr = "^0.10.1"
+# Database
+SQLAlchemy = "^2.0.25"
+alembic = "^1.13.1"
+# Monitoring and health checks
+prometheus-client = "^0.19.0"
+aiohttp = "^3.9.3"
+
+[tool.poetry.group.test.dependencies]
+# Testing framework
+pytest = "^8.0.0"
+pytest-asyncio = "^0.21.1"
+pytest-cov = "^4.1.0"
+pytest-xdist = "^3.3.1"
+pytest-timeout = "^2.1.0"
+pytest-benchmark = "^4.0.0"
+pytest-mock = "^3.11.1"
+pytest-memray = "^1.5.0"
+pytest-html = "^4.1.1"
+# Mock and test utilities
+responses = "^0.24.1"
+freezegun = "^1.2.2"
+factory-boy = "^3.3.0"
+faker = "^20.1.0"
+
+[tool.poetry.group.dev.dependencies]
+# Code quality
+black = "^23.12.1"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+mypy-extensions = "^1.0.0"
+# Security testing
+bandit = "^1.7.5"
+safety = "^3.0.0"
+pip-audit = "^2.6.1"
+semgrep = "^1.45.0"
+# Performance testing
+memory-profiler = "^0.61.0"
+psutil = "^5.9.6"
+# Type checking
+types-requests = "^2.31.0"
+types-setuptools = "^69.0.0"
+
+[tool.poetry.scripts]
+pybmp = "src.main:main"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,0 +1,2136 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="67" skipped="0" tests="238" time="0.530" timestamp="2025-09-26T11:48:18.418693-06:00" hostname="Aarons-MacBook-Pro-2.local"><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_valid_route_monitoring_message" time="0.014"><failure message="assert None is not None">self = &lt;tests.unit.test_bmp_parser.TestBMPParser object at 0x108ba9310&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x108e692b0&gt;
+
+    @pytest.mark.unit
+    def test_parse_valid_route_monitoring_message(self, bmp_parser):
+        """Test parsing valid route monitoring message."""
+        message_data = TEST_MESSAGES['route_monitoring']
+        result = bmp_parser.parse_message(message_data)
+    
+&gt;       assert result is not None
+E       assert None is not None
+
+tests/unit/test_bmp_parser.py:27: AssertionError</failure></testcase><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_peer_up_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_peer_down_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_initiation_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_termination_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_stats_report_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_invalid_version" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_short_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_incomplete_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_unsupported_message_type" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_per_peer_header_parsing" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_per_peer_header_insufficient_data" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_bgp_update_parsing" time="0.000"><failure message="IndexError: index out of range">self = &lt;tests.unit.test_bmp_parser.TestBMPParser object at 0x108c6a0d0&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x108f10d70&gt;
+
+    @pytest.mark.unit
+    def test_bgp_update_parsing(self, bmp_parser):
+        """Test BGP UPDATE message parsing."""
+        # Create BGP UPDATE with withdrawn routes and NLRI
+        bgp_update = BMPMessageBuilder.create_bgp_update(
+            withdrawn=['10.0.1.0/24'],
+            path_attrs=[
+                {'type': 1, 'value': 0},  # ORIGIN
+                {'type': 3, 'value': '192.0.2.1'}  # NEXT_HOP
+            ],
+            nlri=['10.0.2.0/24', '10.0.3.0/24']
+        )
+    
+        # Extract just the UPDATE part (skip BGP header)
+        update_data = bgp_update[19:]  # Skip 19-byte BGP header
+&gt;       result = bmp_parser._parse_bgp_update(update_data)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_bmp_parser.py:169: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/bmp/parser.py:173: in _parse_bgp_update
+    update['attributes'] = self._parse_path_attributes(data[offset:offset+path_attr_len])
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/bmp/parser.py:226: in _parse_path_attributes
+    'value': self._parse_attribute_value(attr_type, attr_data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.bmp.parser.BMPParser object at 0x108f10d70&gt;, attr_type = 1
+data = b''
+
+    def _parse_attribute_value(self, attr_type: int, data: bytes) -&gt; Any:
+        """Parse specific BGP attribute values."""
+        if attr_type == 1:  # ORIGIN
+&gt;           return data[0]
+                   ^^^^^^^
+E           IndexError: index out of range
+
+src/bmp/parser.py:235: IndexError</failure></testcase><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_as_path_attribute" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_communities_attribute" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_large_communities_attribute" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_nlri_ipv4" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_nlri_ipv6" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_mp_reach_nlri" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_mp_unreach_nlri" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_bgp_open_message" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_bgp_open_invalid_length" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_route_distinguisher" time="0.000"><failure message="struct.error: pack expected 4 items for packing (got 3)">self = &lt;tests.unit.test_bmp_parser.TestBMPParser object at 0x108c88830&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x108e1b850&gt;
+
+    @pytest.mark.unit
+    def test_parse_route_distinguisher(self, bmp_parser):
+        """Test Route Distinguisher parsing."""
+        # Type 0: AS:Number
+&gt;       rd_type0 = struct.pack("&gt;HHHI", 0, 65001, 100)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       struct.error: pack expected 4 items for packing (got 3)
+
+tests/unit/test_bmp_parser.py:295: error</failure></testcase><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_tlvs" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_parse_capabilities" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_error_handling" time="0.000"><failure message="AssertionError: Expected 'error' to have been called.">self = &lt;MagicMock name='logger.error' id='4443078736'&gt;
+
+    def assert_called(self):
+        """assert that the mock was called at least once
+        """
+        if self.call_count == 0:
+            msg = ("Expected '%s' to have been called." %
+                   (self._mock_name or 'mock'))
+&gt;           raise AssertionError(msg)
+E           AssertionError: Expected 'error' to have been called.
+
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:946: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+self = &lt;tests.unit.test_bmp_parser.TestBMPParser object at 0x108bc40b0&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x108df3540&gt;
+
+    @pytest.mark.unit
+    def test_error_handling(self, bmp_parser):
+        """Test error handling in parser."""
+        # Test with corrupted data that should trigger exception handling
+        corrupted_data = b'\x03\x00\x00\x00\x50\x00' + b'\xff' * 70
+    
+        with patch('src.bmp.parser.logger') as mock_logger:
+            result = bmp_parser.parse_message(corrupted_data)
+    
+            # Should return None and log error
+            assert result is None
+&gt;           mock_logger.error.assert_called()
+E           AssertionError: Expected 'error' to have been called.
+
+tests/unit/test_bmp_parser.py:347: AssertionError</failure></testcase><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_buffer_management" time="0.000"><failure message="TypeError: 'NoneType' object is not subscriptable">self = &lt;tests.unit.test_bmp_parser.TestBMPParser object at 0x108bdbac0&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x108de8ef0&gt;
+
+    @pytest.mark.unit
+    def test_buffer_management(self, bmp_parser):
+        """Test parser buffer management."""
+        # Test that parser doesn't maintain state between calls
+        message1 = TEST_MESSAGES['route_monitoring']
+        message2 = TEST_MESSAGES['peer_up']
+    
+        result1 = bmp_parser.parse_message(message1)
+        result2 = bmp_parser.parse_message(message2)
+    
+&gt;       assert result1['type'] == 'route_monitoring'
+               ^^^^^^^^^^^^^^^
+E       TypeError: 'NoneType' object is not subscriptable
+
+tests/unit/test_bmp_parser.py:359: TypeError</failure></testcase><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_message_type_enum_values" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_peer_type_enum_values" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_bgp_message_type_enum_values" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParser" name="test_afi_safi_enum_values" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_maximum_message_size" time="0.000"><failure message="AssertionError: assert {'bgp_message': {'data': '78787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878...isher': b'xxxxxxxx', 'peer_flags': {'a_flag': True, 'l_flag': True, 'v_flag': False}, ...}, 'type': 'route_monitoring'} is None">self = &lt;tests.unit.test_bmp_parser.TestBMPParserEdgeCases object at 0x108ba8e10&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x109073ef0&gt;
+
+    @pytest.mark.unit
+    def test_maximum_message_size(self, bmp_parser):
+        """Test handling of maximum-sized messages."""
+        # Test with large but valid message
+        large_data = b'\x03' + struct.pack("&gt;I", 1000) + b'\x00' + b'x' * 994
+        result = bmp_parser.parse_message(large_data)
+        # Should handle gracefully (may return None due to invalid content)
+&gt;       assert result is None  # Expected since content is not valid BMP
+        ^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert {'bgp_message': {'data': '78787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878...isher': b'xxxxxxxx', 'peer_flags': {'a_flag': True, 'l_flag': True, 'v_flag': False}, ...}, 'type': 'route_monitoring'} is None
+
+tests/unit/test_bmp_parser.py:414: AssertionError</failure></testcase><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_zero_length_fields" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_malformed_nlri" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_empty_as_path" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_truncated_path_attributes" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_various_afi_safi_combinations[1-1]" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_various_afi_safi_combinations[2-1]" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_various_afi_safi_combinations[25-70]" time="0.000" /><testcase classname="tests.unit.test_bmp_parser.TestBMPParserEdgeCases" name="test_various_afi_safi_combinations[999-999]" time="0.000"><failure message="struct.error: 'B' format requires 0 &lt;= number &lt;= 255">self = &lt;tests.unit.test_bmp_parser.TestBMPParserEdgeCases object at 0x108b5b550&gt;
+bmp_parser = &lt;src.bmp.parser.BMPParser object at 0x108e170c0&gt;, afi = 999
+safi = 999
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("afi,safi", [
+        (AFI.IPV4, SAFI.UNICAST),
+        (AFI.IPV6, SAFI.UNICAST),
+        (AFI.L2VPN, SAFI.EVPN),
+        (999, 999)  # Invalid AFI/SAFI
+    ])
+    def test_various_afi_safi_combinations(self, bmp_parser, afi, safi):
+        """Test parsing with various AFI/SAFI combinations."""
+&gt;       mp_unreach_data = struct.pack("&gt;HB", afi, safi) + b'\x18\x0a\x00\x01'
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       struct.error: 'B' format requires 0 &lt;= number &lt;= 255
+
+tests/unit/test_bmp_parser.py:462: error</failure></testcase><testcase classname="tests.unit.test_config.TestSettings" name="test_default_settings" time="0.001" /><testcase classname="tests.unit.test_config.TestSettings" name="test_environment_variable_override" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_log_level_validation_valid" time="0.001" /><testcase classname="tests.unit.test_config.TestSettings" name="test_log_level_validation_case_insensitive" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_log_level_validation_invalid" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_database_url_property" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_sync_database_url_property" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_required_password_field" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_env_file_loading" time="0.001"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings&#10;db_password&#10;  Field required [type=missing, input_value={}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.11/v/missing">self = &lt;tests.unit.test_config.TestSettings object at 0x108b5b450&gt;
+temp_directory = '/var/folders/c5/_bxymw6d7qz483dybqf_zb440000gn/T/tmpear4bhoz'
+
+        @pytest.mark.unit
+        def test_env_file_loading(self, temp_directory):
+            """Test loading configuration from .env file."""
+            env_file_content = """
+    DB_HOST=file_host
+    DB_PORT=5433
+    DB_NAME=file_db
+    DB_USER=file_user
+    DB_PASSWORD=file_password
+    LOG_LEVEL=DEBUG
+    """
+            env_file_path = os.path.join(temp_directory, '.env')
+    
+            with open(env_file_path, 'w') as f:
+                f.write(env_file_content)
+    
+            # Mock the working directory to point to temp directory
+            with patch('os.getcwd', return_value=temp_directory):
+                with patch.dict(os.environ, {}, clear=True):
+&gt;                   settings = Settings()
+                               ^^^^^^^^^^
+
+tests/unit/test_config.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+__pydantic_self__ = Settings(), _case_sensitive = None
+_nested_model_default_partial_update = None, _env_prefix = None
+_env_file = PosixPath('.'), _env_file_encoding = None, _env_ignore_empty = None
+_env_nested_delimiter = None, _env_nested_max_split = None
+_env_parse_none_str = None, _env_parse_enums = None, _cli_prog_name = None
+_cli_parse_args = None, _cli_settings_source = None, _cli_parse_none_str = None
+_cli_hide_none_type = None, _cli_avoid_json = None, _cli_enforce_required = None
+_cli_use_class_docs_for_groups = None, _cli_exit_on_error = None
+_cli_prefix = None, _cli_flag_prefix_char = None, _cli_implicit_flags = None
+_cli_ignore_unknown_args = None, _cli_kebab_case = None, _cli_shortcuts = None
+_secrets_dir = None, values = {}
+
+    def __init__(
+        __pydantic_self__,
+        _case_sensitive: bool | None = None,
+        _nested_model_default_partial_update: bool | None = None,
+        _env_prefix: str | None = None,
+        _env_file: DotenvType | None = ENV_FILE_SENTINEL,
+        _env_file_encoding: str | None = None,
+        _env_ignore_empty: bool | None = None,
+        _env_nested_delimiter: str | None = None,
+        _env_nested_max_split: int | None = None,
+        _env_parse_none_str: str | None = None,
+        _env_parse_enums: bool | None = None,
+        _cli_prog_name: str | None = None,
+        _cli_parse_args: bool | list[str] | tuple[str, ...] | None = None,
+        _cli_settings_source: CliSettingsSource[Any] | None = None,
+        _cli_parse_none_str: str | None = None,
+        _cli_hide_none_type: bool | None = None,
+        _cli_avoid_json: bool | None = None,
+        _cli_enforce_required: bool | None = None,
+        _cli_use_class_docs_for_groups: bool | None = None,
+        _cli_exit_on_error: bool | None = None,
+        _cli_prefix: str | None = None,
+        _cli_flag_prefix_char: str | None = None,
+        _cli_implicit_flags: bool | None = None,
+        _cli_ignore_unknown_args: bool | None = None,
+        _cli_kebab_case: bool | None = None,
+        _cli_shortcuts: Mapping[str, str | list[str]] | None = None,
+        _secrets_dir: PathType | None = None,
+        **values: Any,
+    ) -&gt; None:
+&gt;       super().__init__(
+            **__pydantic_self__._settings_build_values(
+                values,
+                _case_sensitive=_case_sensitive,
+                _nested_model_default_partial_update=_nested_model_default_partial_update,
+                _env_prefix=_env_prefix,
+                _env_file=_env_file,
+                _env_file_encoding=_env_file_encoding,
+                _env_ignore_empty=_env_ignore_empty,
+                _env_nested_delimiter=_env_nested_delimiter,
+                _env_nested_max_split=_env_nested_max_split,
+                _env_parse_none_str=_env_parse_none_str,
+                _env_parse_enums=_env_parse_enums,
+                _cli_prog_name=_cli_prog_name,
+                _cli_parse_args=_cli_parse_args,
+                _cli_settings_source=_cli_settings_source,
+                _cli_parse_none_str=_cli_parse_none_str,
+                _cli_hide_none_type=_cli_hide_none_type,
+                _cli_avoid_json=_cli_avoid_json,
+                _cli_enforce_required=_cli_enforce_required,
+                _cli_use_class_docs_for_groups=_cli_use_class_docs_for_groups,
+                _cli_exit_on_error=_cli_exit_on_error,
+                _cli_prefix=_cli_prefix,
+                _cli_flag_prefix_char=_cli_flag_prefix_char,
+                _cli_implicit_flags=_cli_implicit_flags,
+                _cli_ignore_unknown_args=_cli_ignore_unknown_args,
+                _cli_kebab_case=_cli_kebab_case,
+                _cli_shortcuts=_cli_shortcuts,
+                _secrets_dir=_secrets_dir,
+            )
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+E       db_password
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.11/v/missing
+
+venv/lib/python3.13/site-packages/pydantic_settings/main.py:193: ValidationError</failure></testcase><testcase classname="tests.unit.test_config.TestSettings" name="test_env_file_override_by_environment" time="0.001" /><testcase classname="tests.unit.test_config.TestSettings" name="test_numeric_field_validation" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_boolean_field_validation" time="0.002" /><testcase classname="tests.unit.test_config.TestSettings" name="test_config_class_settings" time="0.000" /><testcase classname="tests.unit.test_config.TestSettings" name="test_default_field_values" time="0.000"><failure message="AssertionError: assert 'test_bmp' == 'bmp_collector'&#10;  &#10;  - bmp_collector&#10;  + test_bmp">self = &lt;tests.unit.test_config.TestSettings object at 0x108c6ba00&gt;
+
+    @pytest.mark.unit
+    def test_default_field_values(self):
+        """Test all default field values."""
+        with patch.dict(os.environ, {'DB_PASSWORD': 'test_password'}):
+            settings = Settings()
+    
+            # Database settings
+            assert settings.db_host == "localhost"
+            assert settings.db_port == 5432
+&gt;           assert settings.db_name == "bmp_collector"
+E           AssertionError: assert 'test_bmp' == 'bmp_collector'
+E             
+E             - bmp_collector
+E             + test_bmp
+
+tests/unit/test_config.py:243: AssertionError</failure></testcase><testcase classname="tests.unit.test_config.TestGetSettings" name="test_get_settings_returns_settings_instance" time="0.000" /><testcase classname="tests.unit.test_config.TestGetSettings" name="test_get_settings_with_custom_env" time="0.000" /><testcase classname="tests.unit.test_config.TestSettingsEdgeCases" name="test_extreme_numeric_values" time="0.000" /><testcase classname="tests.unit.test_config.TestSettingsEdgeCases" name="test_zero_values" time="0.000" /><testcase classname="tests.unit.test_config.TestSettingsEdgeCases" name="test_special_characters_in_password" time="0.001" /><testcase classname="tests.unit.test_config.TestSettingsEdgeCases" name="test_missing_env_file" time="0.000" /><testcase classname="tests.unit.test_config.TestSettingsEdgeCases" name="test_malformed_env_file" time="0.001"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings&#10;db_password&#10;  Field required [type=missing, input_value={}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.11/v/missing">self = &lt;tests.unit.test_config.TestSettingsEdgeCases object at 0x108c8f410&gt;
+temp_directory = '/var/folders/c5/_bxymw6d7qz483dybqf_zb440000gn/T/tmpc9ia7b8k'
+
+        @pytest.mark.unit
+        def test_malformed_env_file(self, temp_directory):
+            """Test handling of malformed .env file."""
+            malformed_content = """
+    DB_HOST=valid_host
+    INVALID_LINE_WITHOUT_EQUALS
+    DB_PASSWORD=valid_password
+    =VALUE_WITHOUT_KEY
+    """
+            env_file_path = os.path.join(temp_directory, '.env')
+    
+            with open(env_file_path, 'w') as f:
+                f.write(malformed_content)
+    
+            with patch('os.getcwd', return_value=temp_directory):
+                with patch.dict(os.environ, {}, clear=True):
+                    # Should handle malformed lines gracefully
+&gt;                   settings = Settings()
+                               ^^^^^^^^^^
+
+tests/unit/test_config.py:379: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+__pydantic_self__ = Settings(), _case_sensitive = None
+_nested_model_default_partial_update = None, _env_prefix = None
+_env_file = PosixPath('.'), _env_file_encoding = None, _env_ignore_empty = None
+_env_nested_delimiter = None, _env_nested_max_split = None
+_env_parse_none_str = None, _env_parse_enums = None, _cli_prog_name = None
+_cli_parse_args = None, _cli_settings_source = None, _cli_parse_none_str = None
+_cli_hide_none_type = None, _cli_avoid_json = None, _cli_enforce_required = None
+_cli_use_class_docs_for_groups = None, _cli_exit_on_error = None
+_cli_prefix = None, _cli_flag_prefix_char = None, _cli_implicit_flags = None
+_cli_ignore_unknown_args = None, _cli_kebab_case = None, _cli_shortcuts = None
+_secrets_dir = None, values = {}
+
+    def __init__(
+        __pydantic_self__,
+        _case_sensitive: bool | None = None,
+        _nested_model_default_partial_update: bool | None = None,
+        _env_prefix: str | None = None,
+        _env_file: DotenvType | None = ENV_FILE_SENTINEL,
+        _env_file_encoding: str | None = None,
+        _env_ignore_empty: bool | None = None,
+        _env_nested_delimiter: str | None = None,
+        _env_nested_max_split: int | None = None,
+        _env_parse_none_str: str | None = None,
+        _env_parse_enums: bool | None = None,
+        _cli_prog_name: str | None = None,
+        _cli_parse_args: bool | list[str] | tuple[str, ...] | None = None,
+        _cli_settings_source: CliSettingsSource[Any] | None = None,
+        _cli_parse_none_str: str | None = None,
+        _cli_hide_none_type: bool | None = None,
+        _cli_avoid_json: bool | None = None,
+        _cli_enforce_required: bool | None = None,
+        _cli_use_class_docs_for_groups: bool | None = None,
+        _cli_exit_on_error: bool | None = None,
+        _cli_prefix: str | None = None,
+        _cli_flag_prefix_char: str | None = None,
+        _cli_implicit_flags: bool | None = None,
+        _cli_ignore_unknown_args: bool | None = None,
+        _cli_kebab_case: bool | None = None,
+        _cli_shortcuts: Mapping[str, str | list[str]] | None = None,
+        _secrets_dir: PathType | None = None,
+        **values: Any,
+    ) -&gt; None:
+&gt;       super().__init__(
+            **__pydantic_self__._settings_build_values(
+                values,
+                _case_sensitive=_case_sensitive,
+                _nested_model_default_partial_update=_nested_model_default_partial_update,
+                _env_prefix=_env_prefix,
+                _env_file=_env_file,
+                _env_file_encoding=_env_file_encoding,
+                _env_ignore_empty=_env_ignore_empty,
+                _env_nested_delimiter=_env_nested_delimiter,
+                _env_nested_max_split=_env_nested_max_split,
+                _env_parse_none_str=_env_parse_none_str,
+                _env_parse_enums=_env_parse_enums,
+                _cli_prog_name=_cli_prog_name,
+                _cli_parse_args=_cli_parse_args,
+                _cli_settings_source=_cli_settings_source,
+                _cli_parse_none_str=_cli_parse_none_str,
+                _cli_hide_none_type=_cli_hide_none_type,
+                _cli_avoid_json=_cli_avoid_json,
+                _cli_enforce_required=_cli_enforce_required,
+                _cli_use_class_docs_for_groups=_cli_use_class_docs_for_groups,
+                _cli_exit_on_error=_cli_exit_on_error,
+                _cli_prefix=_cli_prefix,
+                _cli_flag_prefix_char=_cli_flag_prefix_char,
+                _cli_implicit_flags=_cli_implicit_flags,
+                _cli_ignore_unknown_args=_cli_ignore_unknown_args,
+                _cli_kebab_case=_cli_kebab_case,
+                _cli_shortcuts=_cli_shortcuts,
+                _secrets_dir=_secrets_dir,
+            )
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+E       db_password
+E         Field required [type=missing, input_value={}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.11/v/missing
+
+venv/lib/python3.13/site-packages/pydantic_settings/main.py:193: ValidationError</failure></testcase><testcase classname="tests.unit.test_config.TestSettingsEdgeCases" name="test_case_sensitivity_off" time="0.000" /><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_database_pool_initialization" time="0.000" /><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_connect_success" time="0.001"><failure message="TypeError: object AsyncMock can't be used in 'await' expression">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108ba9d10&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_connect_success(self, test_settings):
+        """Test successful database connection."""
+        db_pool = DatabasePool(test_settings)
+    
+        with patch('src.database.connection.asyncpg.create_pool') as mock_create_pool:
+            mock_pool = AsyncMock()
+            mock_create_pool.return_value = mock_pool
+    
+&gt;           await db_pool.connect()
+
+tests/unit/test_database_connection.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x10903c690&gt;
+
+    async def connect(self) -&gt; None:
+        """Create database connection pool."""
+        try:
+&gt;           self.pool = await asyncpg.create_pool(
+                host=self.settings.db_host,
+                port=self.settings.db_port,
+                database=self.settings.db_name,
+                user=self.settings.db_user,
+                password=self.settings.db_password,
+                min_size=10,
+                max_size=self.settings.db_pool_size,
+                max_queries=50000,
+                max_cached_statement_lifetime=300,
+                command_timeout=60
+            )
+E           TypeError: object AsyncMock can't be used in 'await' expression
+
+src/database/connection.py:21: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_connect_failure" time="0.001" /><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_disconnect" time="0.001" /><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_disconnect_no_pool" time="0.000" /><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_acquire_context_manager" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108c6cd10&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_acquire_context_manager(self, test_settings):
+        """Test acquire context manager."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       async with db_pool.acquire() as conn:
+                   ^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x108fb1250&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_execute_query" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108c6ce20&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_execute_query(self, test_settings):
+        """Test execute query without results."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_connection.execute.return_value = "EXECUTE 1"
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       result = await db_pool.execute("UPDATE table SET col = $1", "value")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:52: in execute
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x108e758c0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_fetch_query" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108b5b650&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_fetch_query(self, test_settings):
+        """Test fetch query with results."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_records = [{'id': 1, 'name': 'test'}]
+        mock_connection.fetch.return_value = mock_records
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       result = await db_pool.fetch("SELECT * FROM table WHERE id = $1", 1)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:57: in fetch
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x108e74c00&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_fetchrow_query" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108b5b850&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_fetchrow_query(self, test_settings):
+        """Test fetchrow query."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_record = {'id': 1, 'name': 'test'}
+        mock_connection.fetchrow.return_value = mock_record
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       result = await db_pool.fetchrow("SELECT * FROM table WHERE id = $1", 1)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:62: in fetchrow
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x10904d950&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_insert_route" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108b6dd60&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_insert_route(self, test_settings):
+        """Test inserting single route."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        route_data = generate_mock_route_data(1)[0]
+    
+&gt;       await db_pool.insert_route(route_data)
+
+tests/unit/test_database_connection.py:185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:83: in insert_route
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x10904db50&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_batch_insert_routes" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108b6e120&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_batch_insert_routes(self, test_settings):
+        """Test batch inserting routes."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_prepared = AsyncMock()
+        mock_connection.prepare.return_value = mock_prepared
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        routes = generate_mock_route_data(5)
+    
+&gt;       await db_pool.batch_insert_routes(routes)
+
+tests/unit/test_database_connection.py:210: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:116: in batch_insert_routes
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1090c99a0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_batch_insert_empty_routes" time="0.001" /><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_update_route_history" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108dce510&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_update_route_history(self, test_settings):
+        """Test updating route history."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        route_data = {
+            'prefix': '10.0.1.0/24',
+            'router_ip': '192.0.2.1',
+            'peer_ip': '10.0.0.1',
+            'next_hop': '192.0.2.2',
+            'family': 'IPv4',
+            'is_withdrawn': False
+        }
+    
+        with patch('src.database.connection.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           await db_pool.update_route_history(route_data)
+
+tests/unit/test_database_connection.py:256: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:155: in update_route_history
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x109011ef0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_create_or_update_session" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108d98600&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_create_or_update_session(self, test_settings):
+        """Test creating or updating session."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_connection.fetchrow.return_value = {'id': 123}
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        session_data = {
+            'router_ip': '192.0.2.1',
+            'router_name': 'test-router',
+            'session_start': datetime.utcnow(),
+            'status': 'active'
+        }
+    
+&gt;       result = await db_pool.create_or_update_session(session_data)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:286: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:182: in create_or_update_session
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x109013a10&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_close_session" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x1089a7350&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_close_session(self, test_settings):
+        """Test closing session."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       await db_pool.close_session('192.0.2.1', 123)
+
+tests/unit/test_database_connection.py:308: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:205: in close_session
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x109023380&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_update_statistics" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x1089a7590&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_update_statistics(self, test_settings):
+        """Test updating BMP statistics."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        stats_data = {
+            'router_ip': '192.0.2.1',
+            'peer_ip': '10.0.0.1',
+            'peer_as': 65001,
+            'routes_received': 1000,
+            'withdrawals_received': 50
+        }
+    
+        with patch('src.database.connection.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           await db_pool.update_statistics(stats_data)
+
+tests/unit/test_database_connection.py:343: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:217: in update_statistics
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x108dd4710&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_cleanup_old_data" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108e7d4f0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_cleanup_old_data(self, test_settings):
+        """Test cleaning up old data."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        # Mock DELETE results
+        mock_connection.execute.side_effect = ["DELETE 100", "DELETE 50"]
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        with patch('src.database.connection.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           result = await db_pool.cleanup_old_data(30)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:370: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:240: in cleanup_old_data
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x108dd4e90&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_cleanup_old_data_parse_error" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108e7d5a0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_cleanup_old_data_parse_error(self, test_settings):
+        """Test cleanup with unparseable result."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_connection.execute.side_effect = ["INVALID RESULT", "DELETE 25"]
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        with patch('src.database.connection.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           result = await db_pool.cleanup_old_data(30)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:395: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:240: in cleanup_old_data
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1090995a0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_get_active_sessions" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x10804aad0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_active_sessions(self, test_settings):
+        """Test getting active sessions."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_sessions = MOCK_DB_RESPONSES['active_sessions']
+        mock_connection.fetch.return_value = [dict(session) for session in mock_sessions]
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       result = await db_pool.get_active_sessions()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:416: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:261: in get_active_sessions
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x109099a70&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_get_route_summary" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108cbcf50&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_route_summary(self, test_settings):
+        """Test getting route summary."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_summary = MOCK_DB_RESPONSES['route_summary']
+        mock_connection.fetchrow.return_value = mock_summary
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       result = await db_pool.get_route_summary()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:441: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:280: in get_route_summary
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1090b09b0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePool" name="test_get_route_summary_no_data" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePool object at 0x108f4d7f0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_route_summary_no_data(self, test_settings):
+        """Test getting route summary with no data."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_connection.fetchrow.return_value = None
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+&gt;       result = await db_pool.get_route_summary()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:464: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:280: in get_route_summary
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1090b0910&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePoolEdgeCases" name="test_batch_insert_with_field_ordering" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePoolEdgeCases object at 0x108ba9f90&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_batch_insert_with_field_ordering(self, test_settings):
+        """Test batch insert with explicit field ordering."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_prepared = AsyncMock()
+        mock_connection.prepare.return_value = mock_prepared
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        # Create routes with missing fields
+        routes = [
+            {
+                'time': datetime.utcnow(),
+                'router_ip': '192.0.2.1',
+                'peer_ip': '10.0.0.1',
+                'prefix': '10.0.1.0/24',
+                'family': 'IPv4'
+                # Missing many fields
+            }
+        ]
+    
+&gt;       await db_pool.batch_insert_routes(routes)
+
+tests/unit/test_database_connection.py:501: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:116: in batch_insert_routes
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1090049e0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePoolEdgeCases" name="test_connection_context_manager_exception" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePoolEdgeCases object at 0x108baa0d0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_connection_context_manager_exception(self, test_settings):
+        """Test connection context manager with exception."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield AsyncMock()
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        # Test that exceptions are properly propagated
+        with pytest.raises(ValueError):
+&gt;           async with db_pool.acquire() as conn:
+                       ^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:526: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1092e0cd0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePoolEdgeCases" name="test_concurrent_operations" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePoolEdgeCases object at 0x108bd6190&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_concurrent_operations(self, test_settings):
+        """Test concurrent database operations."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connections = [AsyncMock() for _ in range(5)]
+    
+        connection_index = 0
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            nonlocal connection_index
+            conn = mock_connections[connection_index % len(mock_connections)]
+            connection_index += 1
+            yield conn
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        # Run concurrent operations
+        tasks = []
+        for i in range(10):
+            task = asyncio.create_task(
+                db_pool.execute(f"SELECT {i}", i)
+            )
+            tasks.append(task)
+    
+&gt;       await asyncio.gather(*tasks)
+
+tests/unit/test_database_connection.py:557: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:52: in execute
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x10944a350&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePoolEdgeCases" name="test_route_history_with_withdrawal" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePoolEdgeCases object at 0x108bd62c0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_route_history_with_withdrawal(self, test_settings):
+        """Test route history with withdrawal."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        route_data = {
+            'prefix': '10.0.1.0/24',
+            'router_ip': '192.0.2.1',
+            'peer_ip': '10.0.0.1',
+            'next_hop': '192.0.2.2',
+            'family': 'IPv4',
+            'is_withdrawn': True
+        }
+    
+        with patch('src.database.connection.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           await db_pool.update_route_history(route_data)
+
+tests/unit/test_database_connection.py:590: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:155: in update_route_history
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x1093deb30&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePoolEdgeCases" name="test_statistics_with_default_time" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePoolEdgeCases object at 0x108e3b9b0&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_statistics_with_default_time(self, test_settings):
+        """Test statistics update with default timestamp."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        stats_data = {
+            'router_ip': '192.0.2.1',
+            'peer_ip': '10.0.0.1'
+            # No explicit time provided
+        }
+    
+        with patch('src.database.connection.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           await db_pool.update_statistics(stats_data)
+
+tests/unit/test_database_connection.py:621: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:217: in update_statistics
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x10900c2f0&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_database_connection.TestDatabasePoolEdgeCases" name="test_session_creation_with_minimal_data" time="0.001"><failure message="TypeError: 'coroutine' object does not support the asynchronous context manager protocol">self = &lt;tests.unit.test_database_connection.TestDatabasePoolEdgeCases object at 0x108c6cf30&gt;
+test_settings = Settings(db_host='localhost', db_port=5432, db_name='test_bmp', db_user='test_user', db_password='test_password', db_p...e)s - %(message)s', metrics_enabled=True, metrics_port=9090, batch_size=100, batch_timeout_seconds=1, worker_threads=4)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_session_creation_with_minimal_data(self, test_settings):
+        """Test session creation with minimal required data."""
+        db_pool = DatabasePool(test_settings)
+        mock_pool = AsyncMock()
+        mock_connection = AsyncMock()
+        mock_connection.fetchrow.return_value = {'id': 456}
+    
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_connection
+    
+        mock_pool.acquire.return_value = mock_acquire()
+        db_pool.pool = mock_pool
+    
+        session_data = {
+            'router_ip': '192.0.2.1',
+            'session_start': datetime.utcnow()
+            # Missing optional fields
+        }
+    
+&gt;       result = await db_pool.create_or_update_session(session_data)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_database_connection.py:649: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/database/connection.py:182: in create_or_update_session
+    async with self.acquire() as conn:
+               ^^^^^^^^^^^^^^
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:214: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.database.connection.DatabasePool object at 0x10943bb90&gt;
+
+    @asynccontextmanager
+    async def acquire(self):
+        """Acquire a database connection from the pool."""
+&gt;       async with self.pool.acquire() as connection:
+                   ^^^^^^^^^^^^^^^^^^^
+E       TypeError: 'coroutine' object does not support the asynchronous context manager protocol
+
+src/database/connection.py:47: TypeError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_rate_limiter_initialization" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_default_initialization" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_connection_allowed_first_connection" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_connection_allowed_multiple_connections" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_connection_denied_over_limit" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_release_connection" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_release_connection_not_exists" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_release_connection_below_zero" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_message_allowed_initial_burst" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_message_allowed_multiple_messages" time="0.000"><failure message="assert 2.0007152557373047 == 2">self = &lt;tests.unit.test_rate_limiter.TestRateLimiter object at 0x108b6e210&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_message_allowed_multiple_messages(self):
+        """Test allowing multiple messages."""
+        limiter = RateLimiter(burst_size=10)
+        ip = "192.0.2.1"
+    
+        # Test consuming multiple tokens at once
+        allowed = await limiter.check_message_allowed(ip, count=5)
+        assert allowed is True
+        assert limiter.message_tokens[ip] == 5  # 10 - 5
+    
+        allowed = await limiter.check_message_allowed(ip, count=3)
+        assert allowed is True
+&gt;       assert limiter.message_tokens[ip] == 2  # 5 - 3
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 2.0007152557373047 == 2
+
+tests/unit/test_rate_limiter.py:160: AssertionError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_token_bucket_refill" time="0.001"><failure message="TypeError: '&lt;' not supported between instances of 'MagicMock' and 'int'">self = &lt;tests.unit.test_rate_limiter.TestRateLimiter object at 0x108b6e300&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_token_bucket_refill(self):
+        """Test token bucket refilling over time."""
+        limiter = RateLimiter(max_messages_per_second=10, burst_size=5)
+        ip = "192.0.2.1"
+    
+        # Consume all tokens
+        allowed = await limiter.check_message_allowed(ip, count=5)
+        assert allowed is True
+        assert limiter.message_tokens[ip] == 0
+    
+        # Mock time advancement
+        with patch('time.time') as mock_time:
+            start_time = time.time()
+            mock_time.return_value = start_time
+    
+            # Set initial time
+&gt;           await limiter.check_message_allowed(ip, count=0)  # Just to set last_update
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_rate_limiter.py:185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.utils.rate_limiter.RateLimiter object at 0x108e4b4d0&gt;
+ip = '192.0.2.1', count = 0
+
+    async def check_message_allowed(self, ip: str, count: int = 1) -&gt; bool:
+        """Check if messages from this IP are allowed (token bucket algorithm)."""
+        async with self._lock:
+            now = time.time()
+            time_passed = now - self.last_update[ip]
+    
+            # Refill tokens based on time passed
+            tokens_to_add = time_passed * self.max_messages_per_second
+&gt;           self.message_tokens[ip] = min(
+                self.burst_size,
+                self.message_tokens[ip] + tokens_to_add
+            )
+E           TypeError: '&lt;' not supported between instances of 'MagicMock' and 'int'
+
+src/utils/rate_limiter.py:50: TypeError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_token_bucket_max_cap" time="0.001"><failure message="TypeError: '&lt;' not supported between instances of 'MagicMock' and 'int'">self = &lt;tests.unit.test_rate_limiter.TestRateLimiter object at 0x108dcc3d0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_token_bucket_max_cap(self):
+        """Test token bucket doesn't exceed maximum capacity."""
+        limiter = RateLimiter(max_messages_per_second=100, burst_size=10)
+        ip = "192.0.2.1"
+    
+        with patch('time.time') as mock_time:
+            start_time = time.time()
+            mock_time.return_value = start_time
+    
+            # Initialize
+&gt;           await limiter.check_message_allowed(ip, count=0)
+
+tests/unit/test_rate_limiter.py:205: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;src.utils.rate_limiter.RateLimiter object at 0x1090c87d0&gt;
+ip = '192.0.2.1', count = 0
+
+    async def check_message_allowed(self, ip: str, count: int = 1) -&gt; bool:
+        """Check if messages from this IP are allowed (token bucket algorithm)."""
+        async with self._lock:
+            now = time.time()
+            time_passed = now - self.last_update[ip]
+    
+            # Refill tokens based on time passed
+            tokens_to_add = time_passed * self.max_messages_per_second
+&gt;           self.message_tokens[ip] = min(
+                self.burst_size,
+                self.message_tokens[ip] + tokens_to_add
+            )
+E           TypeError: '&lt;' not supported between instances of 'MagicMock' and 'int'
+
+src/utils/rate_limiter.py:50: TypeError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_different_ips_independent" time="0.000"><failure message="assert True is False">self = &lt;tests.unit.test_rate_limiter.TestRateLimiter object at 0x108e8cc90&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_different_ips_independent(self):
+        """Test that different IPs have independent limits."""
+        limiter = RateLimiter(max_connections_per_ip=2, burst_size=5)
+        ip1 = "192.0.2.1"
+        ip2 = "192.0.2.2"
+    
+        # Exhaust connections for ip1
+        await limiter.check_connection_allowed(ip1)
+        await limiter.check_connection_allowed(ip1)
+        denied = await limiter.check_connection_allowed(ip1)
+        assert denied is False
+    
+        # ip2 should still be allowed
+        allowed = await limiter.check_connection_allowed(ip2)
+        assert allowed is True
+    
+        # Exhaust message tokens for ip1
+        await limiter.check_message_allowed(ip1, count=5)
+        denied = await limiter.check_message_allowed(ip1, count=1)
+&gt;       assert denied is False
+E       assert True is False
+
+tests/unit/test_rate_limiter.py:239: AssertionError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_concurrent_access" time="0.000"><failure message="assert 40.01096725463867 == 40">self = &lt;tests.unit.test_rate_limiter.TestRateLimiter object at 0x108dad570&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_concurrent_access(self):
+        """Test concurrent access to rate limiter."""
+        limiter = RateLimiter(max_connections_per_ip=10, burst_size=50)
+        ip = "192.0.2.1"
+    
+        async def connection_worker():
+            return await limiter.check_connection_allowed(ip)
+    
+        async def message_worker():
+            return await limiter.check_message_allowed(ip)
+    
+        # Run concurrent operations
+        connection_tasks = [connection_worker() for _ in range(5)]
+        message_tasks = [message_worker() for _ in range(10)]
+    
+        connection_results = await asyncio.gather(*connection_tasks)
+        message_results = await asyncio.gather(*message_tasks)
+    
+        # All should succeed (within limits)
+        assert all(connection_results)
+        assert all(message_results)
+    
+        # Verify final state
+        assert limiter.connections_per_ip[ip] == 5
+&gt;       assert limiter.message_tokens[ip] == 40  # 50 - 10
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 40.01096725463867 == 40
+
+tests/unit/test_rate_limiter.py:271: AssertionError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_get_stats" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiter" name="test_get_stats_empty" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_zero_limits" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_very_high_limits" time="0.001" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_time_synchronization_edge_case" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_ipv6_addresses" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_long_ip_addresses" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_fractional_tokens" time="0.000"><failure message="assert -2638361843.200834 == 0">self = &lt;tests.unit.test_rate_limiter.TestRateLimiterEdgeCases object at 0x108c6d480&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_fractional_tokens(self):
+        """Test token bucket with fractional token generation."""
+        limiter = RateLimiter(max_messages_per_second=1.5, burst_size=5)  # 1.5 tokens per second
+        ip = "192.0.2.1"
+    
+        with patch('time.time') as mock_time:
+            start_time = 1000.0
+            mock_time.return_value = start_time
+    
+            # Initialize and consume all tokens
+            await limiter.check_message_allowed(ip, count=5)
+&gt;           assert limiter.message_tokens[ip] == 0
+E           assert -2638361843.200834 == 0
+
+tests/unit/test_rate_limiter.py:411: AssertionError</failure></testcase><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_rapid_successive_calls" time="0.000" /><testcase classname="tests.unit.test_rate_limiter.TestRateLimiterEdgeCases" name="test_memory_cleanup" time="0.002" /><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_processor_initialization" time="0.001" /><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_route_monitoring_message" time="0.002"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108baa710&gt;
+route_processor = &lt;coroutine object route_processor at 0x108db41c0&gt;
+sample_route_monitoring_message = {'bgp_message': {'attributes': [{'flags': {'extended': False, 'optional': False, 'partial': False, 'transitive': True}...\x00\x00\x00\x00', 'peer_flags': {'a_flag': False, 'l_flag': False, 'v_flag': False}, ...}, 'type': 'route_monitoring'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_route_monitoring_message(self, route_processor, sample_route_monitoring_message):
+        """Test processing route monitoring message."""
+        router_ip = "192.0.2.100"
+    
+&gt;       await route_processor.process_message(sample_route_monitoring_message, router_ip)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:32: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_peer_up_message" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108bd6b10&gt;
+route_processor = &lt;coroutine object route_processor at 0x108db4f40&gt;
+sample_peer_up_message = {'local_ip': '192.0.2.100', 'local_port': 179, 'peer': {'peer_as': 65001, 'peer_bgp_id': '192.0.2.1', 'peer_distinguis...x00\x00\x00\x00\x00', 'peer_flags': {'a_flag': False, 'l_flag': False, 'v_flag': False}, ...}, 'remote_port': 179, ...}
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_peer_up_message(self, route_processor, sample_peer_up_message):
+        """Test processing peer up message."""
+        router_ip = "192.0.2.100"
+    
+&gt;       await route_processor.process_message(sample_peer_up_message, router_ip)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:54: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_peer_down_message" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108bd6c40&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd4e80&gt;
+sample_peer_down_message = {'peer': {'peer_as': 65001, 'peer_bgp_id': '192.0.2.1', 'peer_distinguisher': b'\x00\x00\x00\x00\x00\x00\x00\x00', 'peer_flags': {'a_flag': False, 'l_flag': False, 'v_flag': False}, ...}, 'reason': 1, 'type': 'peer_down'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_peer_down_message(self, route_processor, sample_peer_down_message):
+        """Test processing peer down message."""
+        router_ip = "192.0.2.100"
+    
+&gt;       await route_processor.process_message(sample_peer_down_message, router_ip)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:71: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_stats_message" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108e38ef0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd44c0&gt;
+sample_stats_message = {'peer': {'peer_as': 65001, 'peer_bgp_id': '192.0.2.1', 'peer_distinguisher': b'\x00\x00\x00\x00\x00\x00\x00\x00', 'pe......}, 'stats': [{'type': 0, 'value': 5}, {'type': 7, 'value': 1000}, {'type': 8, 'value': 50}], 'type': 'stats_report'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_stats_message(self, route_processor, sample_stats_message):
+        """Test processing statistics message."""
+        router_ip = "192.0.2.100"
+    
+&gt;       await route_processor.process_message(sample_stats_message, router_ip)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:87: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_initiation_message" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108c6d6a0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd5cc0&gt;
+sample_initiation_message = {'information': [{'type': 0, 'value': 'Test BMP Implementation'}, {'type': 1, 'value': 'Version 1.0'}, {'type': 2, 'value': 'test-router'}], 'type': 'initiation'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_initiation_message(self, route_processor, sample_initiation_message):
+        """Test processing initiation message."""
+        router_ip = "192.0.2.100"
+    
+&gt;       await route_processor.process_message(sample_initiation_message, router_ip)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:101: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_termination_message" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'db_pool'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108c6d9d0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd50c0&gt;
+sample_termination_message = {'information': [{'type': 0, 'value': 'Session terminated by user'}], 'type': 'termination'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_termination_message(self, route_processor, sample_termination_message):
+        """Test processing termination message."""
+        router_ip = "192.0.2.100"
+    
+        # Mock active sessions
+&gt;       route_processor.db_pool.get_active_sessions.return_value = [
+        ^^^^^^^^^^^^^^^^^^^^^^^
+            {'router_ip': router_ip, 'id': 123}
+        ]
+E       AttributeError: 'coroutine' object has no attribute 'db_pool'
+
+tests/unit/test_route_processor.py:116: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_create_base_route" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_create_base_route'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108fbc350&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd6980&gt;
+sample_timestamp = datetime.datetime(2024, 1, 1, 12, 0)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_create_base_route(self, route_processor, sample_timestamp):
+        """Test creating base route structure."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        prefix = "10.0.1.0/24"
+    
+&gt;       route = route_processor._create_base_route(router_ip, peer_ip, peer_as, prefix, sample_timestamp)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute '_create_base_route'
+
+tests/unit/test_route_processor.py:137: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_create_route_from_nlri" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_create_route_from_nlri'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108fbc150&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd6440&gt;
+sample_timestamp = datetime.datetime(2024, 1, 1, 12, 0)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_create_route_from_nlri(self, route_processor, sample_timestamp):
+        """Test creating route from NLRI with attributes."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        prefix = "10.0.1.0/24"
+        attributes = {
+            'next_hop': '192.0.2.2',
+            'origin': 0,
+            'as_path': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001, 65002]}],
+            'communities': ['65001:100'],
+            'med': 50,
+            'local_pref': 100
+        }
+    
+&gt;       route = route_processor._create_route_from_nlri(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            router_ip, peer_ip, peer_as, prefix, attributes, sample_timestamp, AFI.IPV4
+        )
+E       AttributeError: 'coroutine' object has no attribute '_create_route_from_nlri'
+
+tests/unit/test_route_processor.py:165: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_create_evpn_route" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_create_evpn_route'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108b6e5d0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd6e00&gt;
+sample_timestamp = datetime.datetime(2024, 1, 1, 12, 0)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_create_evpn_route(self, route_processor, sample_timestamp):
+        """Test creating EVPN route."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        evpn_data = {
+            'type': 2,
+            'name': 'MAC/IP Advertisement',
+            'rd': '65001:100',
+            'esi': '01234567890123456789',
+            'eth_tag': 100,
+            'mac': '00:11:22:33:44:55'
+        }
+        attributes = {
+            'origin': 0,
+            'as_path': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001]}]
+        }
+    
+&gt;       route = route_processor._create_evpn_route(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            router_ip, peer_ip, peer_as, evpn_data, attributes, sample_timestamp
+        )
+E       AttributeError: 'coroutine' object has no attribute '_create_evpn_route'
+
+tests/unit/test_route_processor.py:196: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_parse_attributes" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_parse_attributes'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108b6e6c0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd7100&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_parse_attributes(self, route_processor):
+        """Test parsing BGP attributes."""
+        attributes = [
+            {'type': 1, 'value': 0},  # ORIGIN
+            {'type': 2, 'value': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001]}]},  # AS_PATH
+            {'type': 3, 'value': '192.0.2.1'},  # NEXT_HOP
+            {'type': 4, 'value': 50},  # MED
+            {'type': 5, 'value': 100},  # LOCAL_PREF
+            {'type': 8, 'value': ['65001:100']},  # COMMUNITIES
+        ]
+    
+&gt;       parsed = route_processor._parse_attributes(attributes)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute '_parse_attributes'
+
+tests/unit/test_route_processor.py:220: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_get_family" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_get_family'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108e8d010&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd71c0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_family(self, route_processor):
+        """Test address family determination."""
+&gt;       assert route_processor._get_family(AFI.IPV4, SAFI.UNICAST) == 'IPv4'
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute '_get_family'
+
+tests/unit/test_route_processor.py:233: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_get_timestamp" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_get_timestamp'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108e8c4b0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd74c0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_timestamp(self, route_processor):
+        """Test timestamp extraction from peer info."""
+        peer_info = {
+            'timestamp_sec': 1704110400,
+            'timestamp_usec': 500000
+        }
+    
+&gt;       timestamp = route_processor._get_timestamp(peer_info)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute '_get_timestamp'
+
+tests/unit/test_route_processor.py:247: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_get_timestamp_no_timestamp" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_get_timestamp'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108cc25b0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108db41c0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_timestamp_no_timestamp(self, route_processor):
+        """Test timestamp when peer info has no timestamp."""
+        peer_info = {}
+    
+        with patch('src.bmp.processor.datetime') as mock_datetime:
+            mock_now = datetime(2024, 1, 1, 12, 0, 0)
+            mock_datetime.utcnow.return_value = mock_now
+    
+&gt;           timestamp = route_processor._get_timestamp(peer_info)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'coroutine' object has no attribute '_get_timestamp'
+
+tests/unit/test_route_processor.py:262: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_flush_routes" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'route_buffer' and no __dict__ for setting new attributes">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108db5190&gt;
+route_processor = &lt;coroutine object route_processor at 0x108db5b40&gt;
+mock_route_batch = [{'afi': 1, 'as_path': '[65000, 65001]', 'family': 'IPv4', 'is_withdrawn': True, ...}, {'afi': 1, 'as_path': '[65001, ...is_withdrawn': False, ...}, {'afi': 1, 'as_path': '[65005, 65006]', 'family': 'IPv4', 'is_withdrawn': False, ...}, ...]
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_flush_routes(self, route_processor, mock_route_batch):
+        """Test flushing routes to database."""
+        # Add routes to buffer
+&gt;       route_processor.route_buffer = mock_route_batch.copy()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'route_buffer' and no __dict__ for setting new attributes
+
+tests/unit/test_route_processor.py:271: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_flush_routes_empty_buffer" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'flush_routes'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108db4710&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd7340&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_flush_routes_empty_buffer(self, route_processor):
+        """Test flushing empty route buffer."""
+&gt;       await route_processor.flush_routes()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'flush_routes'
+
+tests/unit/test_route_processor.py:288: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_flush_routes_database_error" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'route_buffer' and no __dict__ for setting new attributes">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108e7e6d0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd7100&gt;
+mock_route_batch = [{'afi': 1, 'as_path': '[65000, 65001]', 'family': 'IPv4', 'is_withdrawn': True, ...}, {'afi': 1, 'as_path': '[65001, ...is_withdrawn': False, ...}, {'afi': 1, 'as_path': '[65005, 65006]', 'family': 'IPv4', 'is_withdrawn': False, ...}, ...]
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_flush_routes_database_error(self, route_processor, mock_route_batch):
+        """Test handling database error during flush."""
+        # Add routes to buffer
+&gt;       route_processor.route_buffer = mock_route_batch.copy()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'route_buffer' and no __dict__ for setting new attributes
+
+tests/unit/test_route_processor.py:299: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_buffer_auto_flush" time="0.001"><failure message="AttributeError: &lt;coroutine object route_processor at 0x108dd6ec0&gt; does not have the attribute 'flush_routes'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108e7e780&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd6ec0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_buffer_auto_flush(self, route_processor):
+        """Test automatic buffer flush when size limit reached."""
+        router_ip = "192.0.2.100"
+    
+        # Create message that will generate routes
+        message = {
+            'type': 'route_monitoring',
+            'peer': {
+                'peer_ip': '192.0.2.1',
+                'peer_as': 65001,
+                'timestamp_sec': 1704110400,
+                'timestamp_usec': 0
+            },
+            'bgp_message': {
+                'type': 'UPDATE',
+                'nlri': [f'10.0.{i}.0/24' for i in range(101)]  # 101 routes &gt; 100 buffer limit
+            }
+        }
+    
+&gt;       with patch.object(route_processor, 'flush_routes') as mock_flush:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_route_processor.py:334: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1495: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;unittest.mock._patch object at 0x109165710&gt;
+
+    def get_original(self):
+        target = self.getter()
+        name = self.attribute
+    
+        original = DEFAULT
+        local = False
+    
+        try:
+            original = target.__dict__[name]
+        except (AttributeError, KeyError):
+            original = getattr(target, name, DEFAULT)
+        else:
+            local = True
+    
+        if name in _builtins and isinstance(target, ModuleType):
+            self.create = True
+    
+        if not self.create and original is DEFAULT:
+&gt;           raise AttributeError(
+                "%s does not have the attribute %r" % (target, name)
+            )
+E           AttributeError: &lt;coroutine object route_processor at 0x108dd6ec0&gt; does not have the attribute 'flush_routes'
+
+/opt/homebrew/Cellar/python@3.13/3.13.1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1465: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_mp_reach_ipv6" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_process_mp_reach'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108cbfcf0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd6d40&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_mp_reach_ipv6(self, route_processor):
+        """Test processing MP_REACH_NLRI for IPv6."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        timestamp = datetime.utcnow()
+        routes = []
+    
+        mp_reach = {
+            'afi': AFI.IPV6,
+            'safi': SAFI.UNICAST,
+            'next_hop': '2001:db8::1',
+            'nlri': ['2001:db8:1::/64', '2001:db8:2::/64']
+        }
+    
+&gt;       await route_processor._process_mp_reach(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            mp_reach, router_ip, peer_ip, peer_as, {}, timestamp, routes
+        )
+E       AttributeError: 'coroutine' object has no attribute '_process_mp_reach'
+
+tests/unit/test_route_processor.py:357: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_mp_reach_evpn" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_process_mp_reach'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108bb3890&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd50c0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_mp_reach_evpn(self, route_processor):
+        """Test processing MP_REACH_NLRI for EVPN."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        timestamp = datetime.utcnow()
+        routes = []
+    
+        mp_reach = {
+            'afi': AFI.L2VPN,
+            'safi': SAFI.EVPN,
+            'next_hop': '192.0.2.2',
+            'nlri': [
+                {'type': 2, 'name': 'MAC/IP Advertisement', 'mac': '00:11:22:33:44:55'}
+            ]
+        }
+    
+&gt;       await route_processor._process_mp_reach(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            mp_reach, router_ip, peer_ip, peer_as, {}, timestamp, routes
+        )
+E       AttributeError: 'coroutine' object has no attribute '_process_mp_reach'
+
+tests/unit/test_route_processor.py:385: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_process_mp_unreach" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_process_mp_unreach'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108f31c70&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd5cc0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_mp_unreach(self, route_processor):
+        """Test processing MP_UNREACH_NLRI."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        timestamp = datetime.utcnow()
+        routes = []
+    
+        mp_unreach = {
+            'afi': AFI.IPV4,
+            'safi': SAFI.UNICAST,
+            'withdrawn': ['10.0.1.0/24', '10.0.2.0/24']
+        }
+    
+&gt;       await route_processor._process_mp_unreach(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            mp_unreach, router_ip, peer_ip, peer_as, timestamp, routes
+        )
+E       AttributeError: 'coroutine' object has no attribute '_process_mp_unreach'
+
+tests/unit/test_route_processor.py:409: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_error_handling" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108de4dd0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd4940&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_error_handling(self, route_processor):
+        """Test error handling in message processing."""
+        router_ip = "192.0.2.100"
+    
+        # Create invalid message that should trigger error
+        invalid_message = {
+            'type': 'invalid_type'
+        }
+    
+        with patch('src.bmp.processor.logger') as mock_logger:
+&gt;           await route_processor.process_message(invalid_message, router_ip)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:429: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_invalid_prefix_handling" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute '_create_base_route'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108de78d0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd5fc0&gt;
+sample_timestamp = datetime.datetime(2024, 1, 1, 12, 0)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_invalid_prefix_handling(self, route_processor, sample_timestamp):
+        """Test handling of invalid prefix formats."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+    
+        # Test with invalid prefix
+        with patch('src.bmp.processor.logger') as mock_logger:
+&gt;           route = route_processor._create_base_route(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                router_ip, peer_ip, peer_as, "invalid-prefix", sample_timestamp
+            )
+E           AttributeError: 'coroutine' object has no attribute '_create_base_route'
+
+tests/unit/test_route_processor.py:444: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_get_stats" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'stats'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108f8c0c0&gt;
+route_processor = &lt;coroutine object route_processor at 0x108dd6380&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_stats(self, route_processor):
+        """Test getting processing statistics."""
+        # Simulate some processing
+&gt;       route_processor.stats['messages_processed'] = 100
+        ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'coroutine' object has no attribute 'stats'
+
+tests/unit/test_route_processor.py:457: AttributeError</failure></testcase><testcase classname="tests.unit.test_route_processor.TestRouteProcessor" name="test_concurrent_buffer_access" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'process_message'">self = &lt;tests.unit.test_route_processor.TestRouteProcessor object at 0x108f8c440&gt;
+route_processor = &lt;coroutine object route_processor at 0x108db41c0&gt;
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_concurrent_buffer_access(self, route_processor):
+        """Test concurrent access to route buffer."""
+        router_ip = "192.0.2.100"
+    
+        # Create multiple concurrent message processing tasks
+        message = {
+            'type': 'route_monitoring',
+            'peer': {
+                'peer_ip': '192.0.2.1',
+                'peer_as': 65001,
+                'timestamp_sec': 1704110400,
+                'timestamp_usec': 0
+            },
+            'bgp_message': {
+                'type': 'UPDATE',
+                'nlri': ['10.0.1.0/24']
+            }
+        }
+    
+        tasks = []
+        for i in range(10):
+            task = asyncio.create_task(
+&gt;               route_processor.process_message(message, router_ip)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            )
+E           AttributeError: 'coroutine' object has no attribute 'process_message'
+
+tests/unit/test_route_processor.py:497: AttributeError</failure></testcase><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_valid_as_numbers[0-0_0]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_valid_as_numbers[65000-65000]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_valid_as_numbers[4294967295-4294967295]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_valid_as_numbers[65001-65001]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_valid_as_numbers[0-0_1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_valid_as_numbers[1.0-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[4294967296]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[invalid]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[None]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[as_num4]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[as_num5]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[inf]" time="0.000"><failure message="OverflowError: cannot convert float infinity to integer">self = &lt;tests.unit.test_validation.TestValidateAsNumber object at 0x108e8dd30&gt;
+as_num = inf
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("as_num", [
+        -1,  # Negative
+        4294967296,  # Too large
+        "invalid",  # Non-numeric string
+        None,  # None value
+        [],  # Invalid type
+        {},  # Invalid type
+        float('inf'),  # Infinity
+        float('nan'),  # NaN
+    ])
+    def test_invalid_as_numbers(self, as_num):
+        """Test invalid AS numbers."""
+&gt;       result = validate_as_number(as_num)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_validation.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+as_num = inf
+
+    def validate_as_number(as_num: Any) -&gt; Optional[int]:
+        """Validate and return AS number if valid."""
+        try:
+&gt;           as_val = int(as_num)
+                     ^^^^^^^^^^^
+E           OverflowError: cannot convert float infinity to integer
+
+src/utils/validation.py:10: OverflowError</failure></testcase><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_invalid_as_numbers[nan]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateAsNumber" name="test_as_number_edge_cases" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[192.0.2.1-192.0.2.1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[10.0.0.1-10.0.0.1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[127.0.0.1-127.0.0.1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[255.255.255.255-255.255.255.255]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[0.0.0.0-0.0.0.0]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[2001:db8::1-2001:db8::1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[::1-::1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[2001:db8:85a3:8d3:1319:8a2e:370:7348-2001:db8:85a3:8d3:1319:8a2e:370:7348]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_valid_ip_addresses[::-::]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[256.0.0.1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[192.168.1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[192.168.1.1.1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[invalid]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[2001:db8::gg]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[None]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[123]" time="0.000"><failure message="AssertionError: assert '0.0.0.123' is None">self = &lt;tests.unit.test_validation.TestValidateIpAddress object at 0x108e7f800&gt;
+ip = 123
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("ip", [
+        "256.0.0.1",  # Invalid IPv4
+        "192.168.1",  # Incomplete IPv4
+        "192.168.1.1.1",  # Too many octets
+        "invalid",  # Non-IP string
+        "2001:db8::gg",  # Invalid IPv6
+        "",  # Empty string
+        None,  # None value
+        123,  # Integer
+        [],  # Invalid type
+    ])
+    def test_invalid_ip_addresses(self, ip):
+        """Test invalid IP addresses."""
+        result = validate_ip_address(ip)
+&gt;       assert result is None
+E       AssertionError: assert '0.0.0.123' is None
+
+tests/unit/test_validation.py:95: AssertionError</failure></testcase><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_invalid_ip_addresses[ip8]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateIpAddress" name="test_ip_address_edge_cases" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[192.0.2.0/24-192.0.2.0/24]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[10.0.0.0/8-10.0.0.0/8]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[172.16.0.0/12-172.16.0.0/12]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[0.0.0.0/0-0.0.0.0/0]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[192.0.2.1/32-192.0.2.1/32]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[2001:db8::/32-2001:db8::/32]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[::/0-::/0]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_valid_prefixes[2001:db8::1/128-2001:db8::1/128]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[192.0.2.0/33]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[192.0.2.0/-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[256.0.0.0/24]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[192.0.2.0]" time="0.000"><failure message="AssertionError: assert '192.0.2.0/32' is None">self = &lt;tests.unit.test_validation.TestValidatePrefix object at 0x108f75550&gt;
+prefix = '192.0.2.0'
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("prefix", [
+        "192.0.2.0/33",  # Invalid IPv4 prefix length
+        "192.0.2.0/-1",  # Negative prefix length
+        "256.0.0.0/24",  # Invalid IPv4 address
+        "192.0.2.0",  # Missing prefix length
+        "192.0.2.0/",  # Empty prefix length
+        "invalid/24",  # Invalid address
+        "",  # Empty string
+        None,  # None value
+        "2001:db8::/129",  # Invalid IPv6 prefix length
+    ])
+    def test_invalid_prefixes(self, prefix):
+        """Test invalid network prefixes."""
+        result = validate_prefix(prefix)
+&gt;       assert result is None
+E       AssertionError: assert '192.0.2.0/32' is None
+
+tests/unit/test_validation.py:143: AssertionError</failure></testcase><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[192.0.2.0/]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[invalid/24]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[None]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_invalid_prefixes[2001:db8::/129]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_prefix_strict_mode" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePrefix" name="test_prefix_edge_cases" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_valid_message_lengths[6-True]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_valid_message_lengths[100-True]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_valid_message_lengths[1048576-True]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_valid_message_lengths[500000-True]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_invalid_message_lengths[5]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_invalid_message_lengths[0]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_invalid_message_lengths[-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_invalid_message_lengths[1048577]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_custom_max_size" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidateMessageLength" name="test_message_length_boundary_conditions" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_valid_ports[1-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_valid_ports[80-80]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_valid_ports[65535-65535]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_valid_ports[22-22]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_valid_ports[443-443]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_valid_ports[1.0-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[0]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[-1]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[65536]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[invalid]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[None]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[port5]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_invalid_ports[inf]" time="0.000"><failure message="OverflowError: cannot convert float infinity to integer">self = &lt;tests.unit.test_validation.TestValidatePort object at 0x108f76cf0&gt;
+port = inf
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("port", [
+        0,  # Invalid (too small)
+        -1,  # Negative
+        65536,  # Too large
+        "invalid",  # Non-numeric string
+        None,  # None value
+        [],  # Invalid type
+        float('inf'),  # Infinity
+    ])
+    def test_invalid_ports(self, port):
+        """Test invalid port numbers."""
+&gt;       result = validate_port(port)
+                 ^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_validation.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+port = inf
+
+    def validate_port(port: Any) -&gt; Optional[int]:
+        """Validate TCP/UDP port number."""
+        try:
+&gt;           port_val = int(port)
+                       ^^^^^^^^^
+E           OverflowError: cannot convert float infinity to integer
+
+src/utils/validation.py:47: OverflowError</failure></testcase><testcase classname="tests.unit.test_validation.TestValidatePort" name="test_port_edge_cases" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_bytes" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_long_bytes" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_string" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_string_with_control_chars" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_long_string" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_mixed_printable_non_printable" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_unicode" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_numbers" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_none" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_empty_data" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_custom_max_length" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_special_characters" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_various_inputs[\x00\x01\x02-000102]" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_various_inputs[test\nstring-test?string]" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_various_inputs[test\tstring-test\tstring]" time="0.000"><failure message="AssertionError: assert 'test?string' == 'test\tstring'&#10;  &#10;  - test&#09;string&#10;  ?     ^&#10;  + test?string&#10;  ?     ^">self = &lt;tests.unit.test_validation.TestSanitizeLogData object at 0x108db5f10&gt;
+test_input = 'test\tstring', expected = 'test\tstring'
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("test_input,expected", [
+        (b'\x00\x01\x02', "000102"),
+        ("test\nstring", "test?string"),  # Newline is control char
+        ("test\tstring", "test\tstring"),  # Tab is printable
+        (12345, "12345"),
+        ([], "[]"),
+        ({}, "{}"),
+    ])
+    def test_sanitize_various_inputs(self, test_input, expected):
+        """Test sanitizing various input types."""
+        result = sanitize_log_data(test_input)
+&gt;       assert result == expected
+E       AssertionError: assert 'test?string' == 'test\tstring'
+E         
+E         - test	string
+E         ?     ^
+E         + test?string
+E         ?     ^
+
+tests/unit/test_validation.py:354: AssertionError</failure></testcase><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_various_inputs[12345-12345]" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_various_inputs[test_input4-[]]" time="0.000" /><testcase classname="tests.unit.test_validation.TestSanitizeLogData" name="test_sanitize_various_inputs[test_input5-{}]" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidationEdgeCases" name="test_validate_with_extreme_values" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidationEdgeCases" name="test_validate_with_type_coercion" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidationEdgeCases" name="test_validate_with_whitespace" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidationEdgeCases" name="test_memory_efficiency_large_data" time="0.000" /><testcase classname="tests.unit.test_validation.TestValidationEdgeCases" name="test_concurrent_validation" time="0.002" /></testsuite></testsuites>

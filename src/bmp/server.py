@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from typing import Dict, Optional, Set
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.bmp.parser import BMPParser
 from src.bmp.processor import RouteProcessor
@@ -17,16 +17,21 @@ class BMPSession:
     MAX_BUFFER_SIZE = 10 * 1024 * 1024  # 10MB buffer limit
     MAX_MESSAGE_SIZE = 1024 * 1024  # 1MB max message size
 
-    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter,
-                 router_ip: str, processor: RouteProcessor):
+    def __init__(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+        router_ip: str,
+        processor: RouteProcessor,
+    ):
         self.reader = reader
         self.writer = writer
         self.router_ip = router_ip
         self.processor = processor
         self.parser = BMPParser()
         self.session_id = None
-        self.connected_at = datetime.utcnow()
-        self.last_message = datetime.utcnow()
+        self.connected_at = datetime.now(timezone.utc)
+        self.last_message = datetime.now(timezone.utc)
         self.messages_received = 0
         self.buffer = b""
 
@@ -47,7 +52,7 @@ class BMPSession:
                     break
 
                 self.buffer += data
-                self.last_message = datetime.utcnow()
+                self.last_message = datetime.now(timezone.utc)
 
                 # Process complete messages from buffer
                 while len(self.buffer) >= 6:
@@ -57,11 +62,13 @@ class BMPSession:
                         self.buffer = self.buffer[1:]  # Skip byte and continue
                         continue
 
-                    msg_length = int.from_bytes(self.buffer[1:5], 'big')
+                    msg_length = int.from_bytes(self.buffer[1:5], "big")
 
                     # Validate message length
                     if msg_length > self.MAX_MESSAGE_SIZE:
-                        logger.error(f"Message too large ({msg_length} bytes) from {self.router_ip}")
+                        logger.error(
+                            f"Message too large ({msg_length} bytes) from {self.router_ip}"
+                        )
                         self.buffer = b""  # Clear buffer to recover
                         break
 
@@ -81,7 +88,9 @@ class BMPSession:
 
                         # Log every 100th message
                         if self.messages_received % 100 == 0:
-                            logger.debug(f"Processed {self.messages_received} messages from {self.router_ip}")
+                            logger.debug(
+                                f"Processed {self.messages_received} messages from {self.router_ip}"
+                            )
 
         except asyncio.CancelledError:
             logger.info(f"BMP session with {self.router_ip} cancelled")
@@ -100,7 +109,9 @@ class BMPSession:
             self.writer.close()
             await self.writer.wait_closed()
 
-            logger.info(f"BMP session with {self.router_ip} closed. Messages: {self.messages_received}")
+            logger.info(
+                f"BMP session with {self.router_ip} closed. Messages: {self.messages_received}"
+            )
         except Exception as e:
             logger.error(f"Error closing session with {self.router_ip}: {e}")
 
@@ -122,9 +133,7 @@ class BMPServer:
         """Start the BMP server."""
         try:
             self.server = await asyncio.start_server(
-                self._handle_client,
-                self.settings.bmp_listen_host,
-                self.settings.bmp_listen_port
+                self._handle_client, self.settings.bmp_listen_host, self.settings.bmp_listen_port
             )
 
             self._running = True
@@ -173,11 +182,18 @@ class BMPServer:
 
         logger.info("BMP server stopped")
 
-    async def _handle_client(self, reader: asyncio.StreamReader,
-                            writer: asyncio.StreamWriter) -> None:
+    async def _handle_client(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle a new client connection."""
-        addr = writer.get_extra_info('peername')
-        router_ip = addr[0] if addr else 'unknown'
+        try:
+            addr = writer.get_extra_info("peername")
+            # Handle case where get_extra_info returns a coroutine (in tests)
+            if hasattr(addr, '__await__'):
+                addr = await addr
+            router_ip = addr[0] if addr else "unknown"
+        except (TypeError, IndexError, AttributeError):
+            router_ip = "unknown"
 
         try:
             # Check connection limit
@@ -210,10 +226,12 @@ class BMPServer:
 
                 # Log statistics
                 stats = self.processor.get_stats()
-                logger.info(f"BMP Stats - Messages: {stats['messages_processed']}, "
-                          f"Routes: {stats['routes_processed']}, "
-                          f"Withdrawals: {stats['withdrawals_processed']}, "
-                          f"Errors: {stats['errors']}")
+                logger.info(
+                    f"BMP Stats - Messages: {stats['messages_processed']}, "
+                    f"Routes: {stats['routes_processed']}, "
+                    f"Withdrawals: {stats['withdrawals_processed']}, "
+                    f"Errors: {stats['errors']}"
+                )
 
             except asyncio.CancelledError:
                 break
@@ -241,8 +259,8 @@ class BMPServer:
         sessions_info = {}
         for router_ip, session in self.sessions.items():
             sessions_info[router_ip] = {
-                'connected_at': session.connected_at.isoformat(),
-                'last_message': session.last_message.isoformat(),
-                'messages_received': session.messages_received
+                "connected_at": session.connected_at.isoformat(),
+                "last_message": session.last_message.isoformat(),
+                "messages_received": session.messages_received,
             }
         return sessions_info

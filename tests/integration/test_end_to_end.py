@@ -28,26 +28,26 @@ class TestEndToEndMessageProcessing:
 
         # Create realistic message sequence
         session_messages = [
-            TEST_MESSAGES['initiation'],
-            TEST_MESSAGES['peer_up'],
+            TEST_MESSAGES["initiation"],
+            TEST_MESSAGES["peer_up"],
         ]
 
         # Add multiple route monitoring messages
         for i in range(5):
             route_msg = BMPMessageBuilder.create_route_monitoring_message(
-                peer_ip="10.0.0.1",
-                peer_as=65001,
-                nlri=[f'203.0.{i}.0/24', f'203.0.{i+100}.0/24']
+                peer_ip="10.0.0.1", peer_as=65001, nlri=[f"203.0.{i}.0/24", f"203.0.{i+100}.0/24"]
             )
             session_messages.append(route_msg)
 
         # Add statistics and termination
-        session_messages.extend([
-            TEST_MESSAGES['stats_report'],
-            TEST_MESSAGES['peer_down'],
-            TEST_MESSAGES['termination'],
-            b""  # EOF
-        ])
+        session_messages.extend(
+            [
+                TEST_MESSAGES["stats_report"],
+                TEST_MESSAGES["peer_down"],
+                TEST_MESSAGES["termination"],
+                b"",  # EOF
+            ]
+        )
 
         reader.read.side_effect = session_messages
 
@@ -65,8 +65,8 @@ class TestEndToEndMessageProcessing:
         mock_db_pool.close_session.assert_called()  # Termination
 
         # Verify route processing
-        assert processor.stats['messages_processed'] == 8
-        assert processor.stats['routes_processed'] >= 10  # 5 messages * 2 routes each
+        assert processor.stats["messages_processed"] == 8
+        assert processor.stats["routes_processed"] >= 10  # 5 messages * 2 routes each
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -79,28 +79,19 @@ class TestEndToEndMessageProcessing:
         router_ip = "192.0.2.100"
 
         # Create messages from multiple peers
-        messages = [TEST_MESSAGES['initiation']]
+        messages = [TEST_MESSAGES["initiation"]]
 
-        peers = [
-            ("10.0.1.1", 65001),
-            ("10.0.1.2", 65002),
-            ("10.0.1.3", 65003)
-        ]
+        peers = [("10.0.1.1", 65001), ("10.0.1.2", 65002), ("10.0.1.3", 65003)]
 
         for peer_ip, peer_as in peers:
             # Peer up
-            peer_up = BMPMessageBuilder.create_peer_up_message(
-                peer_ip=peer_ip,
-                peer_as=peer_as
-            )
+            peer_up = BMPMessageBuilder.create_peer_up_message(peer_ip=peer_ip, peer_as=peer_as)
             messages.append(peer_up)
 
             # Route announcements
             for i in range(3):
                 route_msg = BMPMessageBuilder.create_route_monitoring_message(
-                    peer_ip=peer_ip,
-                    peer_as=peer_as,
-                    nlri=[f'10.{peer_as-65000}.{i}.0/24']
+                    peer_ip=peer_ip, peer_as=peer_as, nlri=[f"10.{peer_as-65000}.{i}.0/24"]
                 )
                 messages.append(route_msg)
 
@@ -116,7 +107,7 @@ class TestEndToEndMessageProcessing:
         # Check route buffer contains routes from all peers
         routes_by_peer = {}
         for route in processor.route_buffer:
-            peer_ip = route['peer_ip']
+            peer_ip = route["peer_ip"]
             if peer_ip not in routes_by_peer:
                 routes_by_peer[peer_ip] = []
             routes_by_peer[peer_ip].append(route)
@@ -137,8 +128,8 @@ class TestEndToEndMessageProcessing:
 
         # Create messages with IPv6 and EVPN content
         messages = [
-            TEST_MESSAGES['initiation'],
-            BMPMessageBuilder.create_peer_up_message(peer_ip="2001:db8::1")
+            TEST_MESSAGES["initiation"],
+            BMPMessageBuilder.create_peer_up_message(peer_ip="2001:db8::1"),
         ]
 
         # Simulate route monitoring with MP_REACH_NLRI for IPv6 and EVPN
@@ -147,7 +138,7 @@ class TestEndToEndMessageProcessing:
         ipv6_route_msg = BMPMessageBuilder.create_route_monitoring_message(
             peer_ip="2001:db8::1",
             peer_as=65001,
-            nlri=[]  # Would contain IPv6 prefixes in MP_REACH_NLRI
+            nlri=[],  # Would contain IPv6 prefixes in MP_REACH_NLRI
         )
         messages.append(ipv6_route_msg)
 
@@ -170,22 +161,18 @@ class TestEndToEndMessageProcessing:
         writer = AsyncMock()
         router_ip = "192.0.2.100"
 
-        messages = [
-            TEST_MESSAGES['initiation'],
-            TEST_MESSAGES['peer_up']
-        ]
+        messages = [TEST_MESSAGES["initiation"], TEST_MESSAGES["peer_up"]]
 
         # First announce some routes
         announce_msg = BMPMessageBuilder.create_route_monitoring_message(
-            nlri=['10.1.0.0/16', '10.2.0.0/16', '10.3.0.0/16']
+            nlri=["10.1.0.0/16", "10.2.0.0/16", "10.3.0.0/16"]
         )
         messages.append(announce_msg)
 
         # Then withdraw some routes
         # Create BGP UPDATE with withdrawn routes
         withdraw_data = BMPMessageBuilder.create_bgp_update(
-            withdrawn=['10.1.0.0/16', '10.2.0.0/16'],
-            nlri=[]
+            withdrawn=["10.1.0.0/16", "10.2.0.0/16"], nlri=[]
         )
 
         # Wrap in BMP route monitoring message
@@ -205,11 +192,11 @@ class TestEndToEndMessageProcessing:
 
         # Verify both announcements and withdrawals were processed
         assert session.messages_received == 4
-        assert processor.stats['routes_processed'] >= 3  # Announcements
-        assert processor.stats['withdrawals_processed'] >= 2  # Withdrawals
+        assert processor.stats["routes_processed"] >= 3  # Announcements
+        assert processor.stats["withdrawals_processed"] >= 2  # Withdrawals
 
         # Check that withdrawal routes are marked correctly
-        withdrawn_routes = [r for r in processor.route_buffer if r['is_withdrawn']]
+        withdrawn_routes = [r for r in processor.route_buffer if r["is_withdrawn"]]
         assert len(withdrawn_routes) >= 2
 
     @pytest.mark.asyncio
@@ -222,18 +209,15 @@ class TestEndToEndMessageProcessing:
         writer = AsyncMock()
         router_ip = "192.0.2.100"
 
-        messages = [
-            TEST_MESSAGES['initiation'],
-            TEST_MESSAGES['peer_up']
-        ]
+        messages = [TEST_MESSAGES["initiation"], TEST_MESSAGES["peer_up"]]
 
         # Add multiple statistics reports
         for i in range(3):
             stats_msg = BMPMessageBuilder.create_stats_report_message(
                 stats=[
-                    {'type': 0, 'value': i * 5},      # Prefixes rejected
-                    {'type': 7, 'value': i * 1000},   # Updates received
-                    {'type': 8, 'value': i * 100}     # Withdrawals received
+                    {"type": 0, "value": i * 5},  # Prefixes rejected
+                    {"type": 7, "value": i * 1000},  # Updates received
+                    {"type": 8, "value": i * 100},  # Withdrawals received
                 ]
             )
             messages.append(stats_msg)
@@ -251,9 +235,9 @@ class TestEndToEndMessageProcessing:
         # Verify statistics data structure
         for call in mock_db_pool.update_statistics.call_args_list:
             stats_data = call[0][0]
-            assert 'router_ip' in stats_data
-            assert 'peer_ip' in stats_data
-            assert stats_data['router_ip'] == router_ip
+            assert "router_ip" in stats_data
+            assert "peer_ip" in stats_data
+            assert stats_data["router_ip"] == router_ip
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -267,21 +251,21 @@ class TestEndToEndMessageProcessing:
 
         # Create message stream with errors
         messages = [
-            TEST_MESSAGES['initiation'],
-            b'\x03\x00\x00\x00\x08\x99\x00',  # Invalid message type
-            TEST_MESSAGES['peer_up'],
-            b'\x03\x00\x00\x00\x06\x00',      # Valid but minimal message
-            TEST_MESSAGES['route_monitoring'],
-            b'\x99\x00\x00\x00\x10\x00test',  # Invalid version
-            TEST_MESSAGES['termination'],
-            b""  # EOF
+            TEST_MESSAGES["initiation"],
+            b"\x03\x00\x00\x00\x08\x99\x00",  # Invalid message type
+            TEST_MESSAGES["peer_up"],
+            b"\x03\x00\x00\x00\x06\x00",  # Valid but minimal message
+            TEST_MESSAGES["route_monitoring"],
+            b"\x99\x00\x00\x00\x10\x00test",  # Invalid version
+            TEST_MESSAGES["termination"],
+            b"",  # EOF
         ]
 
         reader.read.side_effect = messages
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger'):
+        with patch("src.bmp.server.logger"):
             await session.handle()
 
         # Should process valid messages despite errors
@@ -298,30 +282,18 @@ class TestEndToEndMessageProcessing:
         for i in range(3):
             reader = AsyncMock()
             writer = AsyncMock()
-            writer.get_extra_info.return_value = (f'192.0.2.{i+1}', 12345)
+            writer.get_extra_info.return_value = (f"192.0.2.{i+1}", 12345)
 
             # Each session sends different message patterns
             if i == 0:
                 # Session 0: Basic route monitoring
-                messages = [
-                    TEST_MESSAGES['initiation'],
-                    TEST_MESSAGES['route_monitoring'],
-                    b""
-                ]
+                messages = [TEST_MESSAGES["initiation"], TEST_MESSAGES["route_monitoring"], b""]
             elif i == 1:
                 # Session 1: Peer lifecycle
-                messages = [
-                    TEST_MESSAGES['peer_up'],
-                    TEST_MESSAGES['peer_down'],
-                    b""
-                ]
+                messages = [TEST_MESSAGES["peer_up"], TEST_MESSAGES["peer_down"], b""]
             else:
                 # Session 2: Statistics
-                messages = [
-                    TEST_MESSAGES['stats_report'],
-                    TEST_MESSAGES['termination'],
-                    b""
-                ]
+                messages = [TEST_MESSAGES["stats_report"], TEST_MESSAGES["termination"], b""]
 
             reader.read.side_effect = messages
             sessions.append((reader, writer))
@@ -354,11 +326,11 @@ class TestEndToEndMessageProcessing:
         router_ip = "192.0.2.100"
 
         # Generate large number of route monitoring messages
-        messages = [TEST_MESSAGES['initiation']]
+        messages = [TEST_MESSAGES["initiation"]]
 
         for i in range(50):  # 50 route messages
             route_msg = BMPMessageBuilder.create_route_monitoring_message(
-                nlri=[f'203.{i//256}.{i%256}.0/24']
+                nlri=[f"203.{i//256}.{i%256}.0/24"]
             )
             messages.append(route_msg)
 
@@ -370,7 +342,7 @@ class TestEndToEndMessageProcessing:
 
         # Verify high volume processing
         assert session.messages_received == 51
-        assert processor.stats['routes_processed'] >= 50
+        assert processor.stats["routes_processed"] >= 50
 
         # Verify automatic flushing occurred (due to batch size limit)
         assert mock_db_pool.batch_insert_routes.call_count > 1
@@ -390,14 +362,14 @@ class TestEndToEndMessageProcessing:
             raise asyncio.TimeoutError("Connection timeout")
 
         reader.read.side_effect = [
-            TEST_MESSAGES['initiation'],
-            TEST_MESSAGES['peer_up'],
-            timeout_read  # Timeout on third read
+            TEST_MESSAGES["initiation"],
+            TEST_MESSAGES["peer_up"],
+            timeout_read,  # Timeout on third read
         ]
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger'):
+        with patch("src.bmp.server.logger"):
             await session.handle()
 
         # Should have processed messages before timeout
@@ -422,14 +394,12 @@ class TestEndToEndMessageProcessing:
             # Alternate between different message types
             if i % 3 == 0:
                 msg = BMPMessageBuilder.create_route_monitoring_message(
-                    nlri=[f'10.{i//256}.{i%256}.0/24'] * 5  # Multiple prefixes per message
+                    nlri=[f"10.{i//256}.{i%256}.0/24"] * 5  # Multiple prefixes per message
                 )
             elif i % 3 == 1:
                 msg = BMPMessageBuilder.create_stats_report_message()
             else:
-                msg = BMPMessageBuilder.create_peer_up_message(
-                    peer_ip=f"10.0.{i//256}.{i%256}"
-                )
+                msg = BMPMessageBuilder.create_peer_up_message(peer_ip=f"10.0.{i//256}.{i%256}")
             messages.append(msg)
 
         messages.append(b"")  # EOF
@@ -461,31 +431,31 @@ class TestEndToEndMessageProcessing:
 
         # Test each message type through the full pipeline
         test_cases = [
-            ('initiation', TEST_MESSAGES['initiation']),
-            ('peer_up', TEST_MESSAGES['peer_up']),
-            ('route_monitoring', TEST_MESSAGES['route_monitoring']),
-            ('stats_report', TEST_MESSAGES['stats_report']),
-            ('peer_down', TEST_MESSAGES['peer_down']),
-            ('termination', TEST_MESSAGES['termination'])
+            ("initiation", TEST_MESSAGES["initiation"]),
+            ("peer_up", TEST_MESSAGES["peer_up"]),
+            ("route_monitoring", TEST_MESSAGES["route_monitoring"]),
+            ("stats_report", TEST_MESSAGES["stats_report"]),
+            ("peer_down", TEST_MESSAGES["peer_down"]),
+            ("termination", TEST_MESSAGES["termination"]),
         ]
 
         for msg_type, raw_message in test_cases:
             # Parse the message
             parsed = parser.parse_message(raw_message)
             assert parsed is not None, f"Failed to parse {msg_type} message"
-            assert parsed['type'] == msg_type
+            assert parsed["type"] == msg_type
 
             # Process the parsed message
             await processor.process_message(parsed, router_ip)
 
         # Verify all messages were processed
-        assert processor.stats['messages_processed'] == 6
+        assert processor.stats["messages_processed"] == 6
 
         # Verify different processing paths were taken
         if processor.route_buffer:
             # Route monitoring messages should have created routes
-            route_types = set(r.get('family', 'unknown') for r in processor.route_buffer)
-            assert 'IPv4' in route_types
+            route_types = set(r.get("family", "unknown") for r in processor.route_buffer)
+            assert "IPv4" in route_types
 
         # Verify database interactions for different message types
         assert mock_db_pool.create_or_update_session.called  # initiation, peer_up

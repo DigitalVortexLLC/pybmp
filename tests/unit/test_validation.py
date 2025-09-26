@@ -3,8 +3,12 @@ import pytest
 import ipaddress
 
 from src.utils.validation import (
-    validate_as_number, validate_ip_address, validate_prefix,
-    validate_message_length, validate_port, sanitize_log_data
+    validate_as_number,
+    validate_ip_address,
+    validate_prefix,
+    validate_message_length,
+    validate_port,
+    sanitize_log_data,
 )
 
 
@@ -12,30 +16,36 @@ class TestValidateAsNumber:
     """Test AS number validation."""
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("as_num,expected", [
-        (0, 0),
-        (65000, 65000),
-        (4294967295, 4294967295),  # Max 32-bit AS number
-        ("65001", 65001),  # String representation
-        ("0", 0),
-        (1.0, 1),  # Float that can be converted
-    ])
+    @pytest.mark.parametrize(
+        "as_num,expected",
+        [
+            (0, 0),
+            (65000, 65000),
+            (4294967295, 4294967295),  # Max 32-bit AS number
+            ("65001", 65001),  # String representation
+            ("0", 0),
+            (1.0, 1),  # Float that can be converted
+        ],
+    )
     def test_valid_as_numbers(self, as_num, expected):
         """Test valid AS numbers."""
         result = validate_as_number(as_num)
         assert result == expected
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("as_num", [
-        -1,  # Negative
-        4294967296,  # Too large
-        "invalid",  # Non-numeric string
-        None,  # None value
-        [],  # Invalid type
-        {},  # Invalid type
-        float('inf'),  # Infinity
-        float('nan'),  # NaN
-    ])
+    @pytest.mark.parametrize(
+        "as_num",
+        [
+            -1,  # Negative
+            4294967296,  # Too large
+            "invalid",  # Non-numeric string
+            None,  # None value
+            [],  # Invalid type
+            {},  # Invalid type
+            float("inf"),  # Infinity
+            float("nan"),  # NaN
+        ],
+    )
     def test_invalid_as_numbers(self, as_num):
         """Test invalid AS numbers."""
         result = validate_as_number(as_num)
@@ -61,34 +71,40 @@ class TestValidateIpAddress:
     """Test IP address validation."""
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("ip,expected", [
-        ("192.0.2.1", "192.0.2.1"),
-        ("10.0.0.1", "10.0.0.1"),
-        ("127.0.0.1", "127.0.0.1"),
-        ("255.255.255.255", "255.255.255.255"),
-        ("0.0.0.0", "0.0.0.0"),
-        ("2001:db8::1", "2001:db8::1"),
-        ("::1", "::1"),
-        ("2001:db8:85a3:8d3:1319:8a2e:370:7348", "2001:db8:85a3:8d3:1319:8a2e:370:7348"),
-        ("::", "::"),
-    ])
+    @pytest.mark.parametrize(
+        "ip,expected",
+        [
+            ("192.0.2.1", "192.0.2.1"),
+            ("10.0.0.1", "10.0.0.1"),
+            ("127.0.0.1", "127.0.0.1"),
+            ("255.255.255.255", "255.255.255.255"),
+            ("0.0.0.0", "0.0.0.0"),
+            ("2001:db8::1", "2001:db8::1"),
+            ("::1", "::1"),
+            ("2001:db8:85a3:8d3:1319:8a2e:370:7348", "2001:db8:85a3:8d3:1319:8a2e:370:7348"),
+            ("::", "::"),
+        ],
+    )
     def test_valid_ip_addresses(self, ip, expected):
         """Test valid IP addresses."""
         result = validate_ip_address(ip)
         assert result == expected
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("ip", [
-        "256.0.0.1",  # Invalid IPv4
-        "192.168.1",  # Incomplete IPv4
-        "192.168.1.1.1",  # Too many octets
-        "invalid",  # Non-IP string
-        "2001:db8::gg",  # Invalid IPv6
-        "",  # Empty string
-        None,  # None value
-        123,  # Integer
-        [],  # Invalid type
-    ])
+    @pytest.mark.parametrize(
+        "ip",
+        [
+            "256.0.0.1",  # Invalid IPv4
+            "192.168.1",  # Incomplete IPv4
+            "192.168.1.1.1",  # Too many octets
+            "invalid",  # Non-IP string
+            "2001:db8::gg",  # Invalid IPv6
+            "",  # Empty string
+            None,  # None value
+            123,  # Integer
+            [],  # Invalid type
+        ],
+    )
     def test_invalid_ip_addresses(self, ip):
         """Test invalid IP addresses."""
         result = validate_ip_address(ip)
@@ -110,33 +126,39 @@ class TestValidatePrefix:
     """Test network prefix validation."""
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("prefix,expected", [
-        ("192.0.2.0/24", "192.0.2.0/24"),
-        ("10.0.0.0/8", "10.0.0.0/8"),
-        ("172.16.0.0/12", "172.16.0.0/12"),
-        ("0.0.0.0/0", "0.0.0.0/0"),
-        ("192.0.2.1/32", "192.0.2.1/32"),
-        ("2001:db8::/32", "2001:db8::/32"),
-        ("::/0", "::/0"),
-        ("2001:db8::1/128", "2001:db8::1/128"),
-    ])
+    @pytest.mark.parametrize(
+        "prefix,expected",
+        [
+            ("192.0.2.0/24", "192.0.2.0/24"),
+            ("10.0.0.0/8", "10.0.0.0/8"),
+            ("172.16.0.0/12", "172.16.0.0/12"),
+            ("0.0.0.0/0", "0.0.0.0/0"),
+            ("192.0.2.1/32", "192.0.2.1/32"),
+            ("2001:db8::/32", "2001:db8::/32"),
+            ("::/0", "::/0"),
+            ("2001:db8::1/128", "2001:db8::1/128"),
+        ],
+    )
     def test_valid_prefixes(self, prefix, expected):
         """Test valid network prefixes."""
         result = validate_prefix(prefix)
         assert result == expected
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("prefix", [
-        "192.0.2.0/33",  # Invalid IPv4 prefix length
-        "192.0.2.0/-1",  # Negative prefix length
-        "256.0.0.0/24",  # Invalid IPv4 address
-        "192.0.2.0",  # Missing prefix length
-        "192.0.2.0/",  # Empty prefix length
-        "invalid/24",  # Invalid address
-        "",  # Empty string
-        None,  # None value
-        "2001:db8::/129",  # Invalid IPv6 prefix length
-    ])
+    @pytest.mark.parametrize(
+        "prefix",
+        [
+            "192.0.2.0/33",  # Invalid IPv4 prefix length
+            "192.0.2.0/-1",  # Negative prefix length
+            "256.0.0.0/24",  # Invalid IPv4 address
+            "192.0.2.0",  # Missing prefix length
+            "192.0.2.0/",  # Empty prefix length
+            "invalid/24",  # Invalid address
+            "",  # Empty string
+            None,  # None value
+            "2001:db8::/129",  # Invalid IPv6 prefix length
+        ],
+    )
     def test_invalid_prefixes(self, prefix):
         """Test invalid network prefixes."""
         result = validate_prefix(prefix)
@@ -169,24 +191,30 @@ class TestValidateMessageLength:
     """Test BMP message length validation."""
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("length,expected", [
-        (6, True),  # Minimum valid
-        (100, True),  # Normal size
-        (1048576, True),  # Default maximum
-        (500000, True),  # Large but valid
-    ])
+    @pytest.mark.parametrize(
+        "length,expected",
+        [
+            (6, True),  # Minimum valid
+            (100, True),  # Normal size
+            (1048576, True),  # Default maximum
+            (500000, True),  # Large but valid
+        ],
+    )
     def test_valid_message_lengths(self, length, expected):
         """Test valid message lengths."""
         result = validate_message_length(length)
         assert result == expected
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("length", [
-        5,  # Too small
-        0,  # Zero
-        -1,  # Negative
-        1048577,  # Too large (default max)
-    ])
+    @pytest.mark.parametrize(
+        "length",
+        [
+            5,  # Too small
+            0,  # Zero
+            -1,  # Negative
+            1048577,  # Too large (default max)
+        ],
+    )
     def test_invalid_message_lengths(self, length):
         """Test invalid message lengths."""
         result = validate_message_length(length)
@@ -213,29 +241,35 @@ class TestValidatePort:
     """Test port number validation."""
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("port,expected", [
-        (1, 1),  # Minimum valid
-        (80, 80),  # Common port
-        (65535, 65535),  # Maximum valid
-        ("22", 22),  # String representation
-        ("443", 443),
-        (1.0, 1),  # Float that can be converted
-    ])
+    @pytest.mark.parametrize(
+        "port,expected",
+        [
+            (1, 1),  # Minimum valid
+            (80, 80),  # Common port
+            (65535, 65535),  # Maximum valid
+            ("22", 22),  # String representation
+            ("443", 443),
+            (1.0, 1),  # Float that can be converted
+        ],
+    )
     def test_valid_ports(self, port, expected):
         """Test valid port numbers."""
         result = validate_port(port)
         assert result == expected
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("port", [
-        0,  # Invalid (too small)
-        -1,  # Negative
-        65536,  # Too large
-        "invalid",  # Non-numeric string
-        None,  # None value
-        [],  # Invalid type
-        float('inf'),  # Infinity
-    ])
+    @pytest.mark.parametrize(
+        "port",
+        [
+            0,  # Invalid (too small)
+            -1,  # Negative
+            65536,  # Too large
+            "invalid",  # Non-numeric string
+            None,  # None value
+            [],  # Invalid type
+            float("inf"),  # Infinity
+        ],
+    )
     def test_invalid_ports(self, port):
         """Test invalid port numbers."""
         result = validate_port(port)
@@ -257,14 +291,14 @@ class TestSanitizeLogData:
     @pytest.mark.unit
     def test_sanitize_bytes(self):
         """Test sanitizing bytes data."""
-        test_bytes = b'\x01\x02\x03\xff'
+        test_bytes = b"\x01\x02\x03\xff"
         result = sanitize_log_data(test_bytes)
         assert result == "010203ff"
 
     @pytest.mark.unit
     def test_sanitize_long_bytes(self):
         """Test sanitizing long bytes data."""
-        long_bytes = b'x' * 150
+        long_bytes = b"x" * 150
         result = sanitize_log_data(long_bytes, max_len=100)
         assert len(result) == 103  # 100 + "..."
         assert result.endswith("...")
@@ -340,14 +374,17 @@ class TestSanitizeLogData:
         assert result == special_chars  # All should be printable
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("test_input,expected", [
-        (b'\x00\x01\x02', "000102"),
-        ("test\nstring", "test?string"),  # Newline is control char
-        ("test\tstring", "test\tstring"),  # Tab is printable
-        (12345, "12345"),
-        ([], "[]"),
-        ({}, "{}"),
-    ])
+    @pytest.mark.parametrize(
+        "test_input,expected",
+        [
+            (b"\x00\x01\x02", "000102"),
+            ("test\nstring", "test?string"),  # Newline is control char
+            ("test\tstring", "test\tstring"),  # Tab is printable
+            (12345, "12345"),
+            ([], "[]"),
+            ({}, "{}"),
+        ],
+    )
     def test_sanitize_various_inputs(self, test_input, expected):
         """Test sanitizing various input types."""
         result = sanitize_log_data(test_input)
@@ -396,7 +433,7 @@ class TestValidationEdgeCases:
     def test_memory_efficiency_large_data(self):
         """Test memory efficiency with large data."""
         # Test sanitization with very large input
-        large_bytes = b'x' * 10000
+        large_bytes = b"x" * 10000
         result = sanitize_log_data(large_bytes, max_len=50)
 
         # Should truncate efficiently

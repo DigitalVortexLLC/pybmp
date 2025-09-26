@@ -51,11 +51,7 @@ class TestRunner:
         start_time = time.time()
         try:
             result = subprocess.run(
-                cmd,
-                cwd=self.project_root,
-                capture_output=False,
-                text=True,
-                check=True
+                cmd, cwd=self.project_root, capture_output=False, text=True, check=True
             )
             elapsed = time.time() - start_time
             print(f"\n✅ {description} completed successfully ({elapsed:.2f}s)")
@@ -68,37 +64,46 @@ class TestRunner:
 
     def run_unit_tests(self, coverage: bool = True, verbose: bool = True) -> bool:
         """Run unit tests."""
-        cmd = ["python", "-m", "pytest", "tests/unit/"]
+        cmd = ["python3", "-m", "pytest", "tests/unit/"]
 
         if coverage:
-            cmd.extend([
-                "--cov=src",
-                "--cov-report=html",
-                "--cov-report=xml",
-                "--cov-report=term-missing",
-                "--cov-fail-under=85"
-            ])
+            cmd.extend(
+                [
+                    "--cov=src",
+                    "--cov-report=html",
+                    "--cov-report=xml",
+                    "--cov-report=term-missing",
+                    "--cov-fail-under=85",
+                ]
+            )
 
         if verbose:
             cmd.append("-v")
 
-        cmd.extend([
-            "--junitxml=test-reports/junit-unit.xml",
-            "--html=test-reports/unit-tests.html",
-            "--self-contained-html",
-            "-m", "unit"
-        ])
+        cmd.extend(
+            [
+                "--junitxml=test-reports/junit-unit.xml",
+                "--html=test-reports/unit-tests.html",
+                "--self-contained-html",
+                "-m",
+                "unit",
+            ]
+        )
 
         return self.run_command(cmd, "Unit Tests")
 
     def run_integration_tests(self, verbose: bool = True) -> bool:
         """Run integration tests."""
         cmd = [
-            "python", "-m", "pytest", "tests/integration/",
+            "python3",
+            "-m",
+            "pytest",
+            "tests/integration/",
             "--junitxml=test-reports/junit-integration.xml",
             "--html=test-reports/integration-tests.html",
             "--self-contained-html",
-            "-m", "integration"
+            "-m",
+            "integration",
         ]
 
         if verbose:
@@ -109,11 +114,15 @@ class TestRunner:
     def run_security_tests(self, verbose: bool = True) -> bool:
         """Run security tests."""
         cmd = [
-            "python", "-m", "pytest", "tests/security/",
+            "python3",
+            "-m",
+            "pytest",
+            "tests/security/",
             "--junitxml=test-reports/junit-security.xml",
             "--html=test-reports/security-tests.html",
             "--self-contained-html",
-            "-m", "security"
+            "-m",
+            "security",
         ]
 
         if verbose:
@@ -124,11 +133,15 @@ class TestRunner:
     def run_performance_tests(self, verbose: bool = True) -> bool:
         """Run performance/stress tests."""
         cmd = [
-            "python", "-m", "pytest", "tests/",
+            "python3",
+            "-m",
+            "pytest",
+            "tests/",
             "--benchmark-only",
             "--benchmark-json=test-reports/benchmark.json",
             "--junitxml=test-reports/junit-performance.xml",
-            "-m", "slow"
+            "-m",
+            "slow",
         ]
 
         if verbose:
@@ -138,36 +151,46 @@ class TestRunner:
 
     def run_all_tests(self, coverage: bool = True, verbose: bool = True) -> bool:
         """Run all test suites."""
-        cmd = ["python", "-m", "pytest", "tests/"]
+        cmd = ["python3", "-m", "pytest", "tests/"]
 
         if coverage:
-            cmd.extend([
-                "--cov=src",
-                "--cov-report=html",
-                "--cov-report=xml",
-                "--cov-report=term-missing",
-                "--cov-fail-under=80"  # Lower threshold for full suite
-            ])
+            cmd.extend(
+                [
+                    "--cov=src",
+                    "--cov-report=html",
+                    "--cov-report=xml",
+                    "--cov-report=term-missing",
+                    "--cov-fail-under=80",  # Lower threshold for full suite
+                ]
+            )
 
         if verbose:
             cmd.append("-v")
 
-        cmd.extend([
-            "--junitxml=test-reports/junit-all.xml",
-            "--html=test-reports/all-tests.html",
-            "--self-contained-html",
-            "--maxfail=10"  # Stop after 10 failures
-        ])
+        cmd.extend(
+            [
+                "--junitxml=test-reports/junit-all.xml",
+                "--html=test-reports/all-tests.html",
+                "--self-contained-html",
+                "--maxfail=10",  # Stop after 10 failures
+            ]
+        )
 
         return self.run_command(cmd, "All Tests")
 
     def run_code_quality_checks(self) -> bool:
         """Run code quality checks."""
         checks = [
-            (["python", "-m", "black", "--check", "--diff", "src", "tests"], "Black (Code Formatting)"),
-            (["python", "-m", "isort", "--check-only", "--diff", "src", "tests"], "isort (Import Sorting)"),
-            (["python", "-m", "flake8", "src", "tests"], "Flake8 (Linting)"),
-            (["python", "-m", "mypy", "src"], "MyPy (Type Checking)"),
+            (
+                ["python3", "-m", "black", "--check", "--diff", "src", "tests"],
+                "Black (Code Formatting)",
+            ),
+            (
+                ["python3", "-m", "isort", "--check-only", "--diff", "src", "tests"],
+                "isort (Import Sorting)",
+            ),
+            (["python3", "-m", "flake8", "src", "tests"], "Flake8 (Linting)"),
+            (["python3", "-m", "mypy", "src"], "MyPy (Type Checking)"),
         ]
 
         all_passed = True
@@ -180,8 +203,32 @@ class TestRunner:
     def run_security_linting(self) -> bool:
         """Run security linting tools."""
         checks = [
-            (["python", "-m", "bandit", "-r", "src", "-f", "json", "-o", "test-reports/bandit.json"], "Bandit (Security Linting)"),
-            (["python", "-m", "safety", "check", "--json", "--output", "test-reports/safety.json"], "Safety (Vulnerability Check)"),
+            (
+                [
+                    "python3",
+                    "-m",
+                    "bandit",
+                    "-r",
+                    "src",
+                    "-f",
+                    "json",
+                    "-o",
+                    "test-reports/bandit.json",
+                ],
+                "Bandit (Security Linting)",
+            ),
+            (
+                [
+                    "python3",
+                    "-m",
+                    "safety",
+                    "check",
+                    "--json",
+                    "--output",
+                    "test-reports/safety.json",
+                ],
+                "Safety (Vulnerability Check)",
+            ),
         ]
 
         all_passed = True
@@ -194,13 +241,17 @@ class TestRunner:
     def run_parallel_tests(self, num_workers: int = 4) -> bool:
         """Run tests in parallel."""
         cmd = [
-            "python", "-m", "pytest", "tests/",
-            f"-n", str(num_workers),
+            "python3",
+            "-m",
+            "pytest",
+            "tests/",
+            f"-n",
+            str(num_workers),
             "--dist=loadfile",
             "--junitxml=test-reports/junit-parallel.xml",
             "--html=test-reports/parallel-tests.html",
             "--self-contained-html",
-            "-v"
+            "-v",
         ]
 
         return self.run_command(cmd, f"Parallel Tests ({num_workers} workers)")
@@ -208,11 +259,15 @@ class TestRunner:
     def run_memory_tests(self) -> bool:
         """Run memory profiling tests."""
         cmd = [
-            "python", "-m", "pytest", "tests/",
+            "python3",
+            "-m",
+            "pytest",
+            "tests/",
             "--memray",
             "--junitxml=test-reports/junit-memory.xml",
-            "-k", "memory or buffer or large",
-            "-v"
+            "-k",
+            "memory or buffer or large",
+            "-v",
         ]
 
         return self.run_command(cmd, "Memory Profiling Tests")
@@ -224,10 +279,10 @@ class TestRunner:
             return False
 
         # Generate additional coverage formats
-        cmd = ["python", "-m", "coverage", "html", "--directory", "test-reports/coverage-html"]
+        cmd = ["python3", "-m", "coverage", "html", "--directory", "test-reports/coverage-html"]
         self.run_command(cmd, "HTML Coverage Report")
 
-        cmd = ["python", "-m", "coverage", "report"]
+        cmd = ["python3", "-m", "coverage", "report"]
         self.run_command(cmd, "Coverage Summary")
 
         return True
@@ -242,7 +297,7 @@ class TestRunner:
             ".pytest_cache",
             "**/__pycache__",
             "**/*.pyc",
-            "*.memray"
+            "*.memray",
         ]
 
         for pattern in artifacts:
@@ -253,6 +308,7 @@ class TestRunner:
                         path.unlink()
                     elif path.is_dir():
                         import shutil
+
                         shutil.rmtree(path)
             else:
                 path = self.project_root / pattern
@@ -261,6 +317,7 @@ class TestRunner:
                         path.unlink()
                     elif path.is_dir():
                         import shutil
+
                         shutil.rmtree(path)
 
         print("🧹 Cleaned test artifacts")
@@ -300,10 +357,23 @@ class TestRunner:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="BMP Collector Test Runner")
-    parser.add_argument("--mode", choices=[
-        "unit", "integration", "security", "performance", "all",
-        "quality", "security-lint", "parallel", "memory", "clean"
-    ], default="all", help="Test mode to run")
+    parser.add_argument(
+        "--mode",
+        choices=[
+            "unit",
+            "integration",
+            "security",
+            "performance",
+            "all",
+            "quality",
+            "security-lint",
+            "parallel",
+            "memory",
+            "clean",
+        ],
+        default="all",
+        help="Test mode to run",
+    )
     parser.add_argument("--no-coverage", action="store_true", help="Disable coverage reporting")
     parser.add_argument("--quiet", "-q", action="store_true", help="Quiet mode (less verbose)")
     parser.add_argument("--parallel", "-p", type=int, default=4, help="Number of parallel workers")

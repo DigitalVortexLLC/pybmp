@@ -15,7 +15,7 @@ class TestSettings:
         """Test default configuration values."""
         with patch.dict(os.environ, {}, clear=True):
             # Mock required password field
-            with patch.dict(os.environ, {'DB_PASSWORD': 'test_password'}):
+            with patch.dict(os.environ, {"DB_PASSWORD": "test_password"}):
                 settings = Settings()
 
                 # Database defaults
@@ -39,17 +39,17 @@ class TestSettings:
     def test_environment_variable_override(self):
         """Test environment variable overrides."""
         env_vars = {
-            'DB_HOST': 'custom_host',
-            'DB_PORT': '5433',
-            'DB_NAME': 'custom_db',
-            'DB_USER': 'custom_user',
-            'DB_PASSWORD': 'custom_password',
-            'DB_POOL_SIZE': '50',
-            'BMP_LISTEN_HOST': '127.0.0.1',
-            'BMP_LISTEN_PORT': '12345',
-            'LOG_LEVEL': 'DEBUG',
-            'DATA_RETENTION_DAYS': '180',
-            'BATCH_SIZE': '2000'
+            "DB_HOST": "custom_host",
+            "DB_PORT": "5433",
+            "DB_NAME": "custom_db",
+            "DB_USER": "custom_user",
+            "DB_PASSWORD": "custom_password",
+            "DB_POOL_SIZE": "50",
+            "BMP_LISTEN_HOST": "127.0.0.1",
+            "BMP_LISTEN_PORT": "12345",
+            "LOG_LEVEL": "DEBUG",
+            "DATA_RETENTION_DAYS": "180",
+            "BATCH_SIZE": "2000",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -73,21 +73,21 @@ class TestSettings:
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
         for level in valid_levels:
-            with patch.dict(os.environ, {'LOG_LEVEL': level, 'DB_PASSWORD': 'test'}):
+            with patch.dict(os.environ, {"LOG_LEVEL": level, "DB_PASSWORD": "test"}):
                 settings = Settings()
                 assert settings.log_level == level
 
     @pytest.mark.unit
     def test_log_level_validation_case_insensitive(self):
         """Test log level validation is case insensitive."""
-        with patch.dict(os.environ, {'LOG_LEVEL': 'debug', 'DB_PASSWORD': 'test'}):
+        with patch.dict(os.environ, {"LOG_LEVEL": "debug", "DB_PASSWORD": "test"}):
             settings = Settings()
             assert settings.log_level == "DEBUG"
 
     @pytest.mark.unit
     def test_log_level_validation_invalid(self):
         """Test invalid log level validation."""
-        with patch.dict(os.environ, {'LOG_LEVEL': 'INVALID', 'DB_PASSWORD': 'test'}):
+        with patch.dict(os.environ, {"LOG_LEVEL": "INVALID", "DB_PASSWORD": "test"}):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
 
@@ -96,13 +96,16 @@ class TestSettings:
     @pytest.mark.unit
     def test_database_url_property(self):
         """Test database URL generation."""
-        with patch.dict(os.environ, {
-            'DB_HOST': 'localhost',
-            'DB_PORT': '5432',
-            'DB_NAME': 'test_db',
-            'DB_USER': 'test_user',
-            'DB_PASSWORD': 'test_password'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "DB_NAME": "test_db",
+                "DB_USER": "test_user",
+                "DB_PASSWORD": "test_password",
+            },
+        ):
             settings = Settings()
             expected_url = "postgresql+asyncpg://test_user:test_password@localhost:5432/test_db"
             assert settings.database_url == expected_url
@@ -110,13 +113,16 @@ class TestSettings:
     @pytest.mark.unit
     def test_sync_database_url_property(self):
         """Test synchronous database URL generation."""
-        with patch.dict(os.environ, {
-            'DB_HOST': 'localhost',
-            'DB_PORT': '5432',
-            'DB_NAME': 'test_db',
-            'DB_USER': 'test_user',
-            'DB_PASSWORD': 'test_password'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "DB_NAME": "test_db",
+                "DB_USER": "test_user",
+                "DB_PASSWORD": "test_password",
+            },
+        ):
             settings = Settings()
             expected_url = "postgresql://test_user:test_password@localhost:5432/test_db"
             assert settings.sync_database_url == expected_url
@@ -142,13 +148,13 @@ DB_USER=file_user
 DB_PASSWORD=file_password
 LOG_LEVEL=DEBUG
 """
-        env_file_path = os.path.join(temp_directory, '.env')
+        env_file_path = os.path.join(temp_directory, ".env")
 
-        with open(env_file_path, 'w') as f:
+        with open(env_file_path, "w") as f:
             f.write(env_file_content)
 
         # Mock the working directory to point to temp directory
-        with patch('os.getcwd', return_value=temp_directory):
+        with patch("os.getcwd", return_value=temp_directory):
             with patch.dict(os.environ, {}, clear=True):
                 settings = Settings()
 
@@ -166,17 +172,14 @@ LOG_LEVEL=DEBUG
 DB_HOST=file_host
 DB_PASSWORD=file_password
 """
-        env_file_path = os.path.join(temp_directory, '.env')
+        env_file_path = os.path.join(temp_directory, ".env")
 
-        with open(env_file_path, 'w') as f:
+        with open(env_file_path, "w") as f:
             f.write(env_file_content)
 
-        env_vars = {
-            'DB_HOST': 'env_host',
-            'DB_PASSWORD': 'env_password'
-        }
+        env_vars = {"DB_HOST": "env_host", "DB_PASSWORD": "env_password"}
 
-        with patch('os.getcwd', return_value=temp_directory):
+        with patch("os.getcwd", return_value=temp_directory):
             with patch.dict(os.environ, env_vars):
                 settings = Settings()
 
@@ -187,10 +190,7 @@ DB_PASSWORD=file_password
     @pytest.mark.unit
     def test_numeric_field_validation(self):
         """Test numeric field validation."""
-        with patch.dict(os.environ, {
-            'DB_PORT': 'invalid_port',
-            'DB_PASSWORD': 'test'
-        }):
+        with patch.dict(os.environ, {"DB_PORT": "invalid_port", "DB_PASSWORD": "test"}):
             with pytest.raises(ValidationError) as exc_info:
                 Settings()
 
@@ -201,32 +201,29 @@ DB_PASSWORD=file_password
         """Test boolean field validation."""
         # Test various boolean representations
         boolean_tests = [
-            ('true', True),
-            ('True', True),
-            ('1', True),
-            ('yes', True),
-            ('false', False),
-            ('False', False),
-            ('0', False),
-            ('no', False),
+            ("true", True),
+            ("True", True),
+            ("1", True),
+            ("yes", True),
+            ("false", False),
+            ("False", False),
+            ("0", False),
+            ("no", False),
         ]
 
         for str_value, expected_bool in boolean_tests:
-            with patch.dict(os.environ, {
-                'METRICS_ENABLED': str_value,
-                'DB_PASSWORD': 'test'
-            }):
+            with patch.dict(os.environ, {"METRICS_ENABLED": str_value, "DB_PASSWORD": "test"}):
                 settings = Settings()
                 assert settings.metrics_enabled == expected_bool
 
     @pytest.mark.unit
     def test_config_class_settings(self):
         """Test Config class settings."""
-        with patch.dict(os.environ, {'DB_PASSWORD': 'test'}):
+        with patch.dict(os.environ, {"DB_PASSWORD": "test"}):
             settings = Settings()
 
             # Verify Config class attributes are set correctly
-            assert hasattr(settings.Config, 'env_file')
+            assert hasattr(settings.Config, "env_file")
             assert settings.Config.env_file == ".env"
             assert settings.Config.env_file_encoding == "utf-8"
             assert settings.Config.case_sensitive is False
@@ -234,7 +231,7 @@ DB_PASSWORD=file_password
     @pytest.mark.unit
     def test_default_field_values(self):
         """Test all default field values."""
-        with patch.dict(os.environ, {'DB_PASSWORD': 'test_password'}):
+        with patch.dict(os.environ, {"DB_PASSWORD": "test_password"}):
             settings = Settings()
 
             # Database settings
@@ -275,7 +272,7 @@ class TestGetSettings:
     @pytest.mark.unit
     def test_get_settings_returns_settings_instance(self):
         """Test that get_settings returns a Settings instance."""
-        with patch.dict(os.environ, {'DB_PASSWORD': 'test'}):
+        with patch.dict(os.environ, {"DB_PASSWORD": "test"}):
             settings = get_settings()
             assert isinstance(settings, Settings)
 
@@ -283,9 +280,9 @@ class TestGetSettings:
     def test_get_settings_with_custom_env(self):
         """Test get_settings with custom environment."""
         custom_env = {
-            'DB_HOST': 'custom.example.com',
-            'DB_PASSWORD': 'custom_password',
-            'LOG_LEVEL': 'DEBUG'
+            "DB_HOST": "custom.example.com",
+            "DB_PASSWORD": "custom_password",
+            "LOG_LEVEL": "DEBUG",
         }
 
         with patch.dict(os.environ, custom_env):
@@ -303,11 +300,11 @@ class TestSettingsEdgeCases:
     def test_extreme_numeric_values(self):
         """Test handling of extreme numeric values."""
         extreme_env = {
-            'DB_PORT': '65535',  # Max port
-            'DB_POOL_SIZE': '1000',  # Large pool
-            'BMP_BUFFER_SIZE': '1048576',  # 1MB buffer
-            'DATA_RETENTION_DAYS': '3650',  # 10 years
-            'DB_PASSWORD': 'test'
+            "DB_PORT": "65535",  # Max port
+            "DB_POOL_SIZE": "1000",  # Large pool
+            "BMP_BUFFER_SIZE": "1048576",  # 1MB buffer
+            "DATA_RETENTION_DAYS": "3650",  # 10 years
+            "DB_PASSWORD": "test",
         }
 
         with patch.dict(os.environ, extreme_env):
@@ -322,10 +319,10 @@ class TestSettingsEdgeCases:
     def test_zero_values(self):
         """Test handling of zero values."""
         zero_env = {
-            'DB_POOL_SIZE': '0',
-            'BMP_MAX_CONNECTIONS': '0',
-            'BATCH_SIZE': '0',
-            'DB_PASSWORD': 'test'
+            "DB_POOL_SIZE": "0",
+            "BMP_MAX_CONNECTIONS": "0",
+            "BATCH_SIZE": "0",
+            "DB_PASSWORD": "test",
         }
 
         with patch.dict(os.environ, zero_env):
@@ -339,22 +336,22 @@ class TestSettingsEdgeCases:
     def test_special_characters_in_password(self):
         """Test handling of special characters in password."""
         special_passwords = [
-            'p@ssw0rd!',
-            'password with spaces',
-            'пароль',  # Cyrillic
-            '密码',    # Chinese
-            'p#ss$w%rd^&*()',
+            "p@ssw0rd!",
+            "password with spaces",
+            "пароль",  # Cyrillic
+            "密码",  # Chinese
+            "p#ss$w%rd^&*()",
         ]
 
         for password in special_passwords:
-            with patch.dict(os.environ, {'DB_PASSWORD': password}):
+            with patch.dict(os.environ, {"DB_PASSWORD": password}):
                 settings = Settings()
                 assert settings.db_password == password
 
     @pytest.mark.unit
     def test_missing_env_file(self):
         """Test behavior when .env file doesn't exist."""
-        with patch.dict(os.environ, {'DB_PASSWORD': 'test'}):
+        with patch.dict(os.environ, {"DB_PASSWORD": "test"}):
             # Should not raise exception even if .env file doesn't exist
             settings = Settings()
             assert isinstance(settings, Settings)
@@ -368,12 +365,12 @@ INVALID_LINE_WITHOUT_EQUALS
 DB_PASSWORD=valid_password
 =VALUE_WITHOUT_KEY
 """
-        env_file_path = os.path.join(temp_directory, '.env')
+        env_file_path = os.path.join(temp_directory, ".env")
 
-        with open(env_file_path, 'w') as f:
+        with open(env_file_path, "w") as f:
             f.write(malformed_content)
 
-        with patch('os.getcwd', return_value=temp_directory):
+        with patch("os.getcwd", return_value=temp_directory):
             with patch.dict(os.environ, {}, clear=True):
                 # Should handle malformed lines gracefully
                 settings = Settings()
@@ -385,11 +382,11 @@ DB_PASSWORD=valid_password
         """Test that environment variables are case insensitive."""
         # Note: Actual environment variables are case sensitive in most systems,
         # but pydantic-settings can handle case conversion
-        with patch.dict(os.environ, {
-            'db_password': 'test_password',  # lowercase
-            'DB_HOST': 'test_host'  # uppercase
-        }):
+        with patch.dict(
+            os.environ,
+            {"db_password": "test_password", "DB_HOST": "test_host"},  # lowercase  # uppercase
+        ):
             settings = Settings()
             # Both should work due to case_sensitive = False
-            assert settings.db_password == 'test_password'
-            assert settings.db_host == 'test_host'
+            assert settings.db_password == "test_password"
+            assert settings.db_host == "test_host"

@@ -9,6 +9,7 @@ from src.utils.config import get_settings
 from src.database.connection import DatabasePool
 from src.bmp.server import BMPServer
 
+
 # Configure logging
 def setup_logging(level: str = "INFO"):
     """Configure application logging."""
@@ -16,9 +17,7 @@ def setup_logging(level: str = "INFO"):
     logging.basicConfig(
         level=getattr(logging, level.upper()),
         format=log_format,
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
     # Suppress verbose asyncio logs
     logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -67,9 +66,7 @@ class BMPCollectorApp:
             # Setup signal handlers
             loop = asyncio.get_running_loop()
             for sig in (signal.SIGTERM, signal.SIGINT):
-                loop.add_signal_handler(
-                    sig, lambda: asyncio.create_task(self.shutdown())
-                )
+                loop.add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))
 
             # Start BMP server
             server_task = asyncio.create_task(self.bmp_server.start())

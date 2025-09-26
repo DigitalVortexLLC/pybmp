@@ -11,8 +11,10 @@ from src.bmp.parser import BMPParser
 from src.database.connection import DatabasePool
 from src.utils.rate_limiter import RateLimiter
 from src.utils.validation import (
-    validate_as_number, validate_ip_address, validate_prefix,
-    sanitize_log_data
+    validate_as_number,
+    validate_ip_address,
+    validate_prefix,
+    sanitize_log_data,
 )
 
 
@@ -29,12 +31,12 @@ class TestBufferOverflowProtection:
         processor = RouteProcessor(mock_db_pool)
 
         # Create oversized data that exceeds MAX_BUFFER_SIZE
-        oversized_data = b'X' * (BMPSession.MAX_BUFFER_SIZE + 1000)
+        oversized_data = b"X" * (BMPSession.MAX_BUFFER_SIZE + 1000)
         reader.read.side_effect = [oversized_data]
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await session.handle()
 
             # Should trigger buffer overflow protection
@@ -58,7 +60,7 @@ class TestBufferOverflowProtection:
 
         session = BMPSession(reader, writer, router_ip, processor)
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await session.handle()
 
             # Should log error and clear buffer
@@ -70,28 +72,28 @@ class TestBufferOverflowProtection:
     def test_parser_malformed_message_protection(self, bmp_parser, malicious_bmp_data):
         """Test parser protection against malformed messages."""
         # Test oversized message
-        result = bmp_parser.parse_message(malicious_bmp_data['oversized_message'][:1000])
+        result = bmp_parser.parse_message(malicious_bmp_data["oversized_message"][:1000])
         assert result is None  # Should reject
 
         # Test invalid version
-        result = bmp_parser.parse_message(malicious_bmp_data['invalid_version'])
+        result = bmp_parser.parse_message(malicious_bmp_data["invalid_version"])
         assert result is None
 
         # Test malformed header
-        result = bmp_parser.parse_message(malicious_bmp_data['malformed_header'])
+        result = bmp_parser.parse_message(malicious_bmp_data["malformed_header"])
         assert result is None
 
         # Test buffer overflow attempt
-        result = bmp_parser.parse_message(malicious_bmp_data['buffer_overflow'][:100])
+        result = bmp_parser.parse_message(malicious_bmp_data["buffer_overflow"][:100])
         assert result is None
 
     @pytest.mark.security
     def test_parser_invalid_peer_header_protection(self, bmp_parser):
         """Test parser protection against invalid peer headers."""
         # Create message with insufficient peer header data
-        insufficient_data = b'\x03\x00\x00\x00\x30\x00' + b'X' * 20  # Less than 42 bytes needed
+        insufficient_data = b"\x03\x00\x00\x00\x30\x00" + b"X" * 20  # Less than 42 bytes needed
 
-        with patch('src.bmp.parser.logger') as mock_logger:
+        with patch("src.bmp.parser.logger") as mock_logger:
             result = bmp_parser.parse_message(insufficient_data)
             assert result is None
             mock_logger.error.assert_called()
@@ -100,7 +102,7 @@ class TestBufferOverflowProtection:
     def test_parser_recursive_structure_protection(self, bmp_parser):
         """Test protection against deeply nested or recursive structures."""
         # Create message with deeply nested AS_PATH
-        deep_as_path = b''
+        deep_as_path = b""
         for i in range(1000):  # Try to create very deep nesting
             deep_as_path += struct.pack(">BB", 2, 1)  # AS_SEQUENCE with 1 AS
             deep_as_path += struct.pack(">I", 65000 + i)
@@ -128,8 +130,10 @@ class TestSQLInjectionPrevention:
             class MockContext:
                 async def __aenter__(self):
                     return mock_connection
+
                 async def __aexit__(self, *args):
                     pass
+
             return MockContext()
 
         db_pool.pool = AsyncMock()
@@ -137,16 +141,16 @@ class TestSQLInjectionPrevention:
 
         # Test with malicious SQL injection payloads
         malicious_route = {
-            'time': datetime.utcnow(),
-            'router_ip': "'; DROP TABLE routes; --",
-            'peer_ip': "'; DELETE FROM routes WHERE 1=1; --",
-            'peer_as': 65001,
-            'prefix': "'; INSERT INTO routes VALUES (1,2,3); --",
-            'prefix_len': 24,
-            'next_hop': "'; UPDATE routes SET prefix='hacked'; --",
-            'family': 'IPv4',
-            'origin': 0,
-            'as_path': "'; EXEC xp_cmdshell('rm -rf /'); --"
+            "time": datetime.utcnow(),
+            "router_ip": "'; DROP TABLE routes; --",
+            "peer_ip": "'; DELETE FROM routes WHERE 1=1; --",
+            "peer_as": 65001,
+            "prefix": "'; INSERT INTO routes VALUES (1,2,3); --",
+            "prefix_len": 24,
+            "next_hop": "'; UPDATE routes SET prefix='hacked'; --",
+            "family": "IPv4",
+            "origin": 0,
+            "as_path": "'; EXEC xp_cmdshell('rm -rf /'); --",
         }
 
         await db_pool.insert_route(malicious_route)
@@ -170,15 +174,17 @@ class TestSQLInjectionPrevention:
         """Test SQL injection protection in session management."""
         db_pool = DatabasePool(test_settings)
         mock_connection = AsyncMock()
-        mock_connection.fetchrow.return_value = {'id': 123}
+        mock_connection.fetchrow.return_value = {"id": 123}
 
         @asyncio.coroutine
         def mock_acquire():
             class MockContext:
                 async def __aenter__(self):
                     return mock_connection
+
                 async def __aexit__(self, *args):
                     pass
+
             return MockContext()
 
         db_pool.pool = AsyncMock()
@@ -186,10 +192,10 @@ class TestSQLInjectionPrevention:
 
         # Malicious session data
         malicious_session = {
-            'router_ip': "'; DROP TABLE router_sessions; --",
-            'router_name': "'; DELETE FROM router_sessions; --",
-            'session_start': datetime.utcnow(),
-            'status': "'; UPDATE router_sessions SET status='hacked'; --"
+            "router_ip": "'; DROP TABLE router_sessions; --",
+            "router_name": "'; DELETE FROM router_sessions; --",
+            "session_start": datetime.utcnow(),
+            "status": "'; UPDATE router_sessions SET status='hacked'; --",
         }
 
         await db_pool.create_or_update_session(malicious_session)
@@ -215,8 +221,10 @@ class TestSQLInjectionPrevention:
             class MockContext:
                 async def __aenter__(self):
                     return mock_connection
+
                 async def __aexit__(self, *args):
                     pass
+
             return MockContext()
 
         db_pool.pool = AsyncMock()
@@ -224,14 +232,14 @@ class TestSQLInjectionPrevention:
 
         # Malicious statistics data
         malicious_stats = {
-            'router_ip': "127.0.0.1'; DROP TABLE bmp_stats; --",
-            'peer_ip': "10.0.0.1'; DELETE FROM bmp_stats; --",
-            'peer_as': 65001,
-            'routes_received': 1000,
-            'withdrawals_received': 50
+            "router_ip": "127.0.0.1'; DROP TABLE bmp_stats; --",
+            "peer_ip": "10.0.0.1'; DELETE FROM bmp_stats; --",
+            "peer_as": 65001,
+            "routes_received": 1000,
+            "withdrawals_received": 50,
         }
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_datetime.utcnow.return_value = datetime.utcnow()
             await db_pool.update_statistics(malicious_stats)
 
@@ -245,13 +253,16 @@ class TestSQLInjectionPrevention:
         assert "DROP TABLE" not in query
 
     @pytest.mark.security
-    @pytest.mark.parametrize("payload", [
-        "'; DROP TABLE routes; --",
-        "' OR 1=1 --",
-        "'; INSERT INTO routes VALUES (1,2,3); --",
-        "1'; EXEC xp_cmdshell('dir'); --",
-        "' UNION SELECT password FROM users --"
-    ])
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "'; DROP TABLE routes; --",
+            "' OR 1=1 --",
+            "'; INSERT INTO routes VALUES (1,2,3); --",
+            "1'; EXEC xp_cmdshell('dir'); --",
+            "' UNION SELECT password FROM users --",
+        ],
+    )
     def test_input_validation_sql_injection_payloads(self, payload):
         """Test input validation against common SQL injection payloads."""
         # IP validation should reject SQL payloads
@@ -268,15 +279,18 @@ class TestInputValidationSecurity:
     """Test input validation security mechanisms."""
 
     @pytest.mark.security
-    @pytest.mark.parametrize("malicious_input", [
-        "<script>alert('xss')</script>",
-        "javascript:alert('xss')",
-        "<img src=x onerror=alert('xss')>",
-        "'; alert('xss'); //",
-        "\x00\x01\x02\x03",  # Binary data
-        "A" * 10000,  # Very long string
-        "\n\r\t\x0b\x0c",  # Control characters
-    ])
+    @pytest.mark.parametrize(
+        "malicious_input",
+        [
+            "<script>alert('xss')</script>",
+            "javascript:alert('xss')",
+            "<img src=x onerror=alert('xss')>",
+            "'; alert('xss'); //",
+            "\x00\x01\x02\x03",  # Binary data
+            "A" * 10000,  # Very long string
+            "\n\r\t\x0b\x0c",  # Control characters
+        ],
+    )
     def test_log_sanitization_security(self, malicious_input):
         """Test log data sanitization against various attacks."""
         sanitized = sanitize_log_data(malicious_input)
@@ -306,9 +320,9 @@ class TestInputValidationSecurity:
 
         # Malformed inputs
         assert validate_as_number("0x1000") is None  # Hex format
-        assert validate_as_number("1e6") is None     # Scientific notation
-        assert validate_as_number(float('inf')) is None
-        assert validate_as_number(float('nan')) is None
+        assert validate_as_number("1e6") is None  # Scientific notation
+        assert validate_as_number(float("inf")) is None
+        assert validate_as_number(float("nan")) is None
 
     @pytest.mark.security
     def test_ip_address_security_validation(self):
@@ -322,7 +336,7 @@ class TestInputValidationSecurity:
         assert validate_ip_address("192.168.1.1/24") is None  # CIDR notation
         assert validate_ip_address("192.168.1.1:8080") is None  # With port
         assert validate_ip_address("file:///etc/passwd") is None  # File URL
-        assert validate_ip_address("http://evil.com") is None    # HTTP URL
+        assert validate_ip_address("http://evil.com") is None  # HTTP URL
 
     @pytest.mark.security
     def test_prefix_validation_security(self):
@@ -345,29 +359,29 @@ class TestInputValidationSecurity:
 
         # Create message with potentially dangerous data
         malicious_message = {
-            'type': 'route_monitoring',
-            'peer': {
-                'peer_ip': "'; DROP TABLE routes; --",
-                'peer_as': "not_a_number",
-                'timestamp_sec': "malicious_timestamp",
-                'timestamp_usec': 0
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "'; DROP TABLE routes; --",
+                "peer_as": "not_a_number",
+                "timestamp_sec": "malicious_timestamp",
+                "timestamp_usec": 0,
             },
-            'bgp_message': {
-                'type': 'UPDATE',
-                'nlri': [
+            "bgp_message": {
+                "type": "UPDATE",
+                "nlri": [
                     "../../../etc/passwd",
                     "<script>alert('xss')</script>",
-                    "'; DROP TABLE routes; --"
-                ]
-            }
+                    "'; DROP TABLE routes; --",
+                ],
+            },
         }
 
         # Should handle malicious input gracefully
-        with patch('src.bmp.processor.logger'):
+        with patch("src.bmp.processor.logger"):
             await route_processor.process_message(malicious_message, router_ip)
 
         # Should not crash and should sanitize data
-        assert route_processor.stats['errors'] >= 0  # May increment error count
+        assert route_processor.stats["errors"] >= 0  # May increment error count
 
 
 class TestRateLimitingSecurity:
@@ -430,8 +444,8 @@ class TestRateLimitingSecurity:
 
         # Verify limits are enforced per IP
         stats = limiter.get_stats()
-        assert stats['total_ips'] == 100
-        assert stats['max_connections'] == 2
+        assert stats["total_ips"] == 100
+        assert stats["max_connections"] == 2
 
     @pytest.mark.asyncio
     @pytest.mark.security
@@ -441,17 +455,17 @@ class TestRateLimitingSecurity:
         server = BMPServer(test_settings, mock_db_pool)
 
         # Fill connection slots
-        server.sessions['192.0.2.1'] = AsyncMock()
-        server.sessions['192.0.2.2'] = AsyncMock()
+        server.sessions["192.0.2.1"] = AsyncMock()
+        server.sessions["192.0.2.2"] = AsyncMock()
 
         # Try to add another connection
         reader = AsyncMock()
         writer = AsyncMock()
-        writer.get_extra_info.return_value = ('192.0.2.3', 12345)
+        writer.get_extra_info.return_value = ("192.0.2.3", 12345)
         writer.close = AsyncMock()
         writer.wait_closed = AsyncMock()
 
-        with patch('src.bmp.server.logger') as mock_logger:
+        with patch("src.bmp.server.logger") as mock_logger:
             await server._handle_client(reader, writer)
 
             # Should reject and log warning
@@ -491,17 +505,17 @@ class TestMemoryExhaustionProtection:
 
         # Try to fill buffer with many routes
         large_message = {
-            'type': 'route_monitoring',
-            'peer': {
-                'peer_ip': '192.0.2.1',
-                'peer_as': 65001,
-                'timestamp_sec': 1704110400,
-                'timestamp_usec': 0
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
             },
-            'bgp_message': {
-                'type': 'UPDATE',
-                'nlri': [f'10.{i//256}.{i%256}.0/24' for i in range(1000)]  # 1000 routes
-            }
+            "bgp_message": {
+                "type": "UPDATE",
+                "nlri": [f"10.{i//256}.{i%256}.0/24" for i in range(1000)],  # 1000 routes
+            },
         }
 
         await route_processor.process_message(large_message, router_ip)
@@ -520,7 +534,7 @@ class TestMemoryExhaustionProtection:
         processor = RouteProcessor(mock_db_pool)
 
         # Create data that approaches buffer limit
-        large_data = b'X' * (BMPSession.MAX_BUFFER_SIZE - 100)
+        large_data = b"X" * (BMPSession.MAX_BUFFER_SIZE - 100)
         reader.read.side_effect = [large_data, b""]
 
         session = BMPSession(reader, writer, router_ip, processor)
@@ -535,7 +549,7 @@ class TestMemoryExhaustionProtection:
     def test_parser_memory_protection_deep_nesting(self, bmp_parser):
         """Test parser memory protection against deep nesting attacks."""
         # Create deeply nested AS_PATH that could cause stack overflow
-        deep_structure = b''
+        deep_structure = b""
         for i in range(100):  # Reasonable depth
             deep_structure += struct.pack(">BB", 2, 2)  # AS_SEQUENCE with 2 ASNs
             deep_structure += struct.pack(">II", 65001, 65002)
@@ -573,7 +587,7 @@ class TestAuthenticationBypass:
         # Mock connection from unknown/unauthorized IP
         reader = AsyncMock()
         writer = AsyncMock()
-        writer.get_extra_info.return_value = ('0.0.0.0', 0)  # Suspicious source
+        writer.get_extra_info.return_value = ("0.0.0.0", 0)  # Suspicious source
 
         # Session should still be created (BMP doesn't have auth by design)
         # but should be monitored and rate-limited
@@ -585,11 +599,11 @@ class TestAuthenticationBypass:
     def test_message_spoofing_protection(self, bmp_parser):
         """Test protection against message spoofing."""
         # Create message with suspicious peer information
-        suspicious_message = b'\x03' + struct.pack(">I", 50) + b'\x00'  # BMP header
-        suspicious_message += b'\x00' * 8  # Peer distinguisher
-        suspicious_message += b'\x00' * 16  # Suspicious peer IP (all zeros)
+        suspicious_message = b"\x03" + struct.pack(">I", 50) + b"\x00"  # BMP header
+        suspicious_message += b"\x00" * 8  # Peer distinguisher
+        suspicious_message += b"\x00" * 16  # Suspicious peer IP (all zeros)
         suspicious_message += struct.pack(">I", 0)  # Suspicious AS (0)
-        suspicious_message += b'\x00' * 18  # Rest of peer header
+        suspicious_message += b"\x00" * 18  # Rest of peer header
 
         # Parser should handle but validation should catch suspicious values
         result = bmp_parser.parse_message(suspicious_message)
@@ -607,38 +621,38 @@ class TestDataIntegrityProtection:
 
         # Message with corrupted/inconsistent data
         corrupted_message = {
-            'type': 'route_monitoring',
-            'peer': {
-                'peer_ip': '192.0.2.1',
-                'peer_as': -1,  # Invalid AS number
-                'timestamp_sec': -1,  # Invalid timestamp
-                'timestamp_usec': 0
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": -1,  # Invalid AS number
+                "timestamp_sec": -1,  # Invalid timestamp
+                "timestamp_usec": 0,
             },
-            'bgp_message': {
-                'type': 'UPDATE',
-                'nlri': ['invalid_prefix', '999.999.999.0/24']  # Invalid prefixes
-            }
+            "bgp_message": {
+                "type": "UPDATE",
+                "nlri": ["invalid_prefix", "999.999.999.0/24"],  # Invalid prefixes
+            },
         }
 
-        with patch('src.bmp.processor.logger'):
+        with patch("src.bmp.processor.logger"):
             await route_processor.process_message(corrupted_message, router_ip)
 
         # Should handle corrupted data gracefully
         # Invalid data should be sanitized or rejected
         for route in route_processor.route_buffer:
             # Check that stored data is valid
-            assert route['peer_as'] >= 0  # Should be corrected or filtered
-            assert route['prefix_len'] >= 0  # Should be reasonable
+            assert route["peer_as"] >= 0  # Should be corrected or filtered
+            assert route["prefix_len"] >= 0  # Should be reasonable
 
     @pytest.mark.security
     def test_timestamp_integrity(self, route_processor):
         """Test timestamp integrity validation."""
         # Test with various timestamp manipulations
         test_cases = [
-            {'timestamp_sec': -1, 'timestamp_usec': 0},  # Negative
-            {'timestamp_sec': 2**32, 'timestamp_usec': 0},  # Too large
-            {'timestamp_sec': 0, 'timestamp_usec': -1},  # Negative microseconds
-            {'timestamp_sec': 0, 'timestamp_usec': 2**32},  # Too large microseconds
+            {"timestamp_sec": -1, "timestamp_usec": 0},  # Negative
+            {"timestamp_sec": 2**32, "timestamp_usec": 0},  # Too large
+            {"timestamp_sec": 0, "timestamp_usec": -1},  # Negative microseconds
+            {"timestamp_sec": 0, "timestamp_usec": 2**32},  # Too large microseconds
         ]
 
         for case in test_cases:
@@ -655,17 +669,14 @@ class TestDataIntegrityProtection:
         # Create concurrent tasks that modify shared data
         async def process_route(i):
             message = {
-                'type': 'route_monitoring',
-                'peer': {
-                    'peer_ip': f'10.0.0.{i}',
-                    'peer_as': 65000 + i,
-                    'timestamp_sec': 1704110400 + i,
-                    'timestamp_usec': 0
+                "type": "route_monitoring",
+                "peer": {
+                    "peer_ip": f"10.0.0.{i}",
+                    "peer_as": 65000 + i,
+                    "timestamp_sec": 1704110400 + i,
+                    "timestamp_usec": 0,
                 },
-                'bgp_message': {
-                    'type': 'UPDATE',
-                    'nlri': [f'203.0.{i}.0/24']
-                }
+                "bgp_message": {"type": "UPDATE", "nlri": [f"203.0.{i}.0/24"]},
             }
             await route_processor.process_message(message, router_ip)
 
@@ -679,7 +690,7 @@ class TestDataIntegrityProtection:
         # Check that routes don't have corrupted data
         seen_prefixes = set()
         for route in route_processor.route_buffer:
-            assert route['prefix'] not in seen_prefixes  # No duplicates
-            seen_prefixes.add(route['prefix'])
-            assert route['peer_as'] >= 65000  # Valid AS range
-            assert '203.0.' in route['prefix']  # Expected prefix format
+            assert route["prefix"] not in seen_prefixes  # No duplicates
+            seen_prefixes.add(route["prefix"])
+            assert route["peer_as"] >= 65000  # Valid AS range
+            assert "203.0." in route["prefix"]  # Expected prefix format

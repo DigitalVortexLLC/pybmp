@@ -3,7 +3,7 @@ import asyncio
 from typing import Optional, List, Dict, Any
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.utils.config import Settings
 
@@ -28,7 +28,7 @@ class DatabasePool:
                 max_size=self.settings.db_pool_size,
                 max_queries=50000,
                 max_cached_statement_lifetime=300,
-                command_timeout=60
+                command_timeout=60,
             )
             logger.info("Database connection pool created successfully")
         except Exception as e:
@@ -104,13 +104,39 @@ class DatabasePool:
 
         # Define explicit field order to prevent data corruption
         fields = [
-            'time', 'router_ip', 'peer_ip', 'peer_as', 'prefix', 'prefix_len',
-            'next_hop', 'origin', 'as_path', 'communities', 'extended_communities',
-            'large_communities', 'med', 'local_pref', 'atomic_aggregate',
-            'aggregator_as', 'aggregator_ip', 'originator_id', 'cluster_list',
-            'route_type', 'route_distinguisher', 'esi', 'ethernet_tag_id',
-            'mac_address', 'ip_address', 'mpls_label1', 'mpls_label2',
-            'afi', 'safi', 'family', 'is_withdrawn', 'withdrawal_time', 'raw_message'
+            "time",
+            "router_ip",
+            "peer_ip",
+            "peer_as",
+            "prefix",
+            "prefix_len",
+            "next_hop",
+            "origin",
+            "as_path",
+            "communities",
+            "extended_communities",
+            "large_communities",
+            "med",
+            "local_pref",
+            "atomic_aggregate",
+            "aggregator_as",
+            "aggregator_ip",
+            "originator_id",
+            "cluster_list",
+            "route_type",
+            "route_distinguisher",
+            "esi",
+            "ethernet_tag_id",
+            "mac_address",
+            "ip_address",
+            "mpls_label1",
+            "mpls_label2",
+            "afi",
+            "safi",
+            "family",
+            "is_withdrawn",
+            "withdrawal_time",
+            "raw_message",
         ]
 
         async with self.acquire() as conn:
@@ -155,13 +181,13 @@ class DatabasePool:
         async with self.acquire() as conn:
             await conn.execute(
                 query,
-                route_data['prefix'],
-                route_data['router_ip'],
-                route_data['peer_ip'],
-                datetime.utcnow(),
-                route_data.get('next_hop'),
-                'active' if not route_data.get('is_withdrawn') else 'withdrawn',
-                route_data['family']
+                route_data["prefix"],
+                route_data["router_ip"],
+                route_data["peer_ip"],
+                datetime.now(timezone.utc),
+                route_data.get("next_hop"),
+                "active" if not route_data.get("is_withdrawn") else "withdrawn",
+                route_data["family"],
             )
 
     async def create_or_update_session(self, session_data: Dict[str, Any]) -> int:
@@ -182,15 +208,15 @@ class DatabasePool:
         async with self.acquire() as conn:
             result = await conn.fetchrow(
                 query,
-                session_data['router_ip'],
-                session_data.get('router_name'),
-                session_data['session_start'],
-                session_data.get('status', 'active'),
-                session_data.get('local_port'),
-                session_data.get('peer_as'),
-                session_data.get('peer_bgp_id')
+                session_data["router_ip"],
+                session_data.get("router_name"),
+                session_data["session_start"],
+                session_data.get("status", "active"),
+                session_data.get("local_port"),
+                session_data.get("peer_as"),
+                session_data.get("peer_bgp_id"),
             )
-            return result['id']
+            return result["id"]
 
     async def close_session(self, router_ip: str, session_id: int) -> None:
         """Close a router session."""
@@ -217,23 +243,23 @@ class DatabasePool:
         async with self.acquire() as conn:
             await conn.execute(
                 query,
-                stats_data.get('time', datetime.utcnow()),
-                stats_data['router_ip'],
-                stats_data['peer_ip'],
-                stats_data.get('peer_as'),
-                stats_data.get('messages_received', 0),
-                stats_data.get('routes_received', 0),
-                stats_data.get('withdrawals_received', 0)
+                stats_data.get("time", datetime.now(timezone.utc)),
+                stats_data["router_ip"],
+                stats_data["peer_ip"],
+                stats_data.get("peer_as"),
+                stats_data.get("messages_received", 0),
+                stats_data.get("routes_received", 0),
+                stats_data.get("withdrawals_received", 0),
             )
 
     async def cleanup_old_data(self, retention_days: int) -> int:
         """Remove old data based on retention policy."""
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
         # Use parameterized queries to prevent SQL injection
         queries = [
             ("DELETE FROM routes WHERE time < $1", cutoff_date),
-            ("DELETE FROM bmp_stats WHERE time < $1", cutoff_date)
+            ("DELETE FROM bmp_stats WHERE time < $1", cutoff_date),
         ]
 
         total_deleted = 0

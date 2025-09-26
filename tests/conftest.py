@@ -40,7 +40,7 @@ def test_settings() -> Settings:
         log_level="DEBUG",
         data_retention_days=30,
         batch_size=100,
-        batch_timeout_seconds=1
+        batch_timeout_seconds=1,
     )
 
 
@@ -72,7 +72,7 @@ def bmp_parser():
 
 
 @pytest.fixture
-async def route_processor(mock_db_pool):
+def route_processor(mock_db_pool):
     """Route processor with mocked database."""
     return RouteProcessor(mock_db_pool)
 
@@ -95,7 +95,7 @@ def mock_env_vars():
         "DB_NAME": "test_db",
         "DB_USER": "test_user",
         "DB_PASSWORD": "test_pass",
-        "LOG_LEVEL": "DEBUG"
+        "LOG_LEVEL": "DEBUG",
     }
     os.environ.update(test_env)
     yield test_env
@@ -113,18 +113,14 @@ def sample_timestamp():
 def sample_peer_header():
     """Sample BMP peer header data."""
     return {
-        'peer_type': 0,
-        'peer_flags': {
-            'v_flag': False,
-            'l_flag': False,
-            'a_flag': False
-        },
-        'peer_distinguisher': b'\x00' * 8,
-        'peer_ip': '192.0.2.1',
-        'peer_as': 65001,
-        'peer_bgp_id': '192.0.2.1',
-        'timestamp_sec': 1704110400,
-        'timestamp_usec': 0
+        "peer_type": 0,
+        "peer_flags": {"v_flag": False, "l_flag": False, "a_flag": False},
+        "peer_distinguisher": b"\x00" * 8,
+        "peer_ip": "192.0.2.1",
+        "peer_as": 65001,
+        "peer_bgp_id": "192.0.2.1",
+        "timestamp_sec": 1704110400,
+        "timestamp_usec": 0,
     }
 
 
@@ -132,26 +128,41 @@ def sample_peer_header():
 def sample_bgp_update():
     """Sample BGP UPDATE message data."""
     return {
-        'type': 'UPDATE',
-        'withdrawn': [],
-        'attributes': [
+        "type": "UPDATE",
+        "withdrawn": [],
+        "attributes": [
             {
-                'type': 1,  # ORIGIN
-                'flags': {'optional': False, 'transitive': True, 'partial': False, 'extended': False},
-                'value': 0  # IGP
+                "type": 1,  # ORIGIN
+                "flags": {
+                    "optional": False,
+                    "transitive": True,
+                    "partial": False,
+                    "extended": False,
+                },
+                "value": 0,  # IGP
             },
             {
-                'type': 2,  # AS_PATH
-                'flags': {'optional': False, 'transitive': True, 'partial': False, 'extended': False},
-                'value': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001, 65002]}]
+                "type": 2,  # AS_PATH
+                "flags": {
+                    "optional": False,
+                    "transitive": True,
+                    "partial": False,
+                    "extended": False,
+                },
+                "value": [{"type": "AS_SEQUENCE", "as_numbers": [65001, 65002]}],
             },
             {
-                'type': 3,  # NEXT_HOP
-                'flags': {'optional': False, 'transitive': True, 'partial': False, 'extended': False},
-                'value': '192.0.2.2'
-            }
+                "type": 3,  # NEXT_HOP
+                "flags": {
+                    "optional": False,
+                    "transitive": True,
+                    "partial": False,
+                    "extended": False,
+                },
+                "value": "192.0.2.2",
+            },
         ],
-        'nlri': ['10.0.1.0/24', '10.0.2.0/24']
+        "nlri": ["10.0.1.0/24", "10.0.2.0/24"],
     }
 
 
@@ -159,9 +170,9 @@ def sample_bgp_update():
 def sample_route_monitoring_message(sample_peer_header, sample_bgp_update):
     """Sample route monitoring message."""
     return {
-        'type': 'route_monitoring',
-        'peer': sample_peer_header,
-        'bgp_message': sample_bgp_update
+        "type": "route_monitoring",
+        "peer": sample_peer_header,
+        "bgp_message": sample_bgp_update,
     }
 
 
@@ -169,43 +180,39 @@ def sample_route_monitoring_message(sample_peer_header, sample_bgp_update):
 def sample_peer_up_message(sample_peer_header):
     """Sample peer up message."""
     return {
-        'type': 'peer_up',
-        'peer': sample_peer_header,
-        'local_ip': '192.0.2.100',
-        'local_port': 179,
-        'remote_port': 179,
-        'sent_open': {
-            'type': 'OPEN',
-            'version': 4,
-            'as': 65000,
-            'hold_time': 180,
-            'bgp_id': '192.0.2.100',
-            'capabilities': []
-        }
+        "type": "peer_up",
+        "peer": sample_peer_header,
+        "local_ip": "192.0.2.100",
+        "local_port": 179,
+        "remote_port": 179,
+        "sent_open": {
+            "type": "OPEN",
+            "version": 4,
+            "as": 65000,
+            "hold_time": 180,
+            "bgp_id": "192.0.2.100",
+            "capabilities": [],
+        },
     }
 
 
 @pytest.fixture
 def sample_peer_down_message(sample_peer_header):
     """Sample peer down message."""
-    return {
-        'type': 'peer_down',
-        'peer': sample_peer_header,
-        'reason': 1
-    }
+    return {"type": "peer_down", "peer": sample_peer_header, "reason": 1}
 
 
 @pytest.fixture
 def sample_stats_message(sample_peer_header):
     """Sample statistics report message."""
     return {
-        'type': 'stats_report',
-        'peer': sample_peer_header,
-        'stats': [
-            {'type': 0, 'value': 5},    # Prefixes rejected
-            {'type': 7, 'value': 1000}, # Updates received
-            {'type': 8, 'value': 50}    # Withdrawals received
-        ]
+        "type": "stats_report",
+        "peer": sample_peer_header,
+        "stats": [
+            {"type": 0, "value": 5},  # Prefixes rejected
+            {"type": 7, "value": 1000},  # Updates received
+            {"type": 8, "value": 50},  # Withdrawals received
+        ],
     }
 
 
@@ -213,12 +220,12 @@ def sample_stats_message(sample_peer_header):
 def sample_initiation_message():
     """Sample initiation message."""
     return {
-        'type': 'initiation',
-        'information': [
-            {'type': 0, 'value': 'Test BMP Implementation'},
-            {'type': 1, 'value': 'Version 1.0'},
-            {'type': 2, 'value': 'test-router'}
-        ]
+        "type": "initiation",
+        "information": [
+            {"type": 0, "value": "Test BMP Implementation"},
+            {"type": 1, "value": "Version 1.0"},
+            {"type": 2, "value": "test-router"},
+        ],
     }
 
 
@@ -226,10 +233,8 @@ def sample_initiation_message():
 def sample_termination_message():
     """Sample termination message."""
     return {
-        'type': 'termination',
-        'information': [
-            {'type': 0, 'value': 'Session terminated by user'}
-        ]
+        "type": "termination",
+        "information": [{"type": 0, "value": "Session terminated by user"}],
     }
 
 
@@ -239,19 +244,15 @@ def malicious_bmp_data():
     """Malicious BMP data for security testing."""
     return {
         # Oversized message
-        'oversized_message': b'\x03' + b'\xFF' * 4 + b'\x00' + b'A' * 1000000,
-
+        "oversized_message": b"\x03" + b"\xFF" * 4 + b"\x00" + b"A" * 1000000,
         # Invalid version
-        'invalid_version': b'\x99' + b'\x00\x00\x00\x10' + b'\x00' + b'test',
-
+        "invalid_version": b"\x99" + b"\x00\x00\x00\x10" + b"\x00" + b"test",
         # Malformed header
-        'malformed_header': b'\x03\x00',
-
+        "malformed_header": b"\x03\x00",
         # Buffer overflow attempt
-        'buffer_overflow': b'\x03' + (0x10000000).to_bytes(4, 'big') + b'\x00' + b'X' * 1000,
-
+        "buffer_overflow": b"\x03" + (0x10000000).to_bytes(4, "big") + b"\x00" + b"X" * 1000,
         # Invalid peer header
-        'invalid_peer_header': b'\x03' + b'\x00\x00\x00\x30' + b'\x00' + b'X' * 20,
+        "invalid_peer_header": b"\x03" + b"\x00\x00\x00\x30" + b"\x00" + b"X" * 20,
     }
 
 
@@ -263,7 +264,7 @@ def sql_injection_payloads():
         "' OR 1=1 --",
         "'; INSERT INTO routes VALUES (1,2,3); --",
         "1'; EXEC xp_cmdshell('dir'); --",
-        "' UNION SELECT password FROM users --"
+        "' UNION SELECT password FROM users --",
     ]
 
 
@@ -274,7 +275,7 @@ def xss_payloads():
         "<script>alert('xss')</script>",
         "javascript:alert('xss')",
         "<img src=x onerror=alert('xss')>",
-        "'; alert('xss'); //"
+        "'; alert('xss'); //",
     ]
 
 
@@ -282,13 +283,7 @@ def xss_payloads():
 @pytest.fixture
 def rate_limit_test_ips():
     """IP addresses for rate limiting tests."""
-    return [
-        "192.0.2.1",
-        "192.0.2.2",
-        "10.0.0.1",
-        "172.16.0.1",
-        "203.0.113.1"
-    ]
+    return ["192.0.2.1", "192.0.2.2", "10.0.0.1", "172.16.0.1", "203.0.113.1"]
 
 
 # Mock data generators for bulk testing
@@ -297,21 +292,21 @@ def generate_mock_routes(count: int = 100) -> list:
     routes = []
     for i in range(count):
         route = {
-            'time': datetime.utcnow(),
-            'router_ip': f'192.0.2.{i % 10 + 1}',
-            'peer_ip': f'10.0.{i // 256}.{i % 256}',
-            'peer_as': 65000 + (i % 1000),
-            'prefix': f'203.0.{i // 256}.0/{24 + (i % 8)}',
-            'prefix_len': 24 + (i % 8),
-            'next_hop': f'192.0.2.{(i % 10) + 1}',
-            'origin': i % 3,
-            'as_path': f'[{65000 + i}, {65001 + i}]',
-            'med': i * 10,
-            'local_pref': 100 + i,
-            'family': 'IPv4',
-            'is_withdrawn': i % 10 == 0,
-            'afi': 1,
-            'safi': 1
+            "time": datetime.utcnow(),
+            "router_ip": f"192.0.2.{i % 10 + 1}",
+            "peer_ip": f"10.0.{i // 256}.{i % 256}",
+            "peer_as": 65000 + (i % 1000),
+            "prefix": f"203.0.{i // 256}.0/{24 + (i % 8)}",
+            "prefix_len": 24 + (i % 8),
+            "next_hop": f"192.0.2.{(i % 10) + 1}",
+            "origin": i % 3,
+            "as_path": f"[{65000 + i}, {65001 + i}]",
+            "med": i * 10,
+            "local_pref": 100 + i,
+            "family": "IPv4",
+            "is_withdrawn": i % 10 == 0,
+            "afi": 1,
+            "safi": 1,
         }
         routes.append(route)
     return routes
@@ -328,10 +323,10 @@ def mock_route_batch():
 def network_error_simulation():
     """Simulate network errors for testing."""
     return {
-        'connection_reset': ConnectionResetError("Connection reset by peer"),
-        'connection_timeout': TimeoutError("Connection timed out"),
-        'connection_refused': ConnectionRefusedError("Connection refused"),
-        'network_unreachable': OSError("Network is unreachable")
+        "connection_reset": ConnectionResetError("Connection reset by peer"),
+        "connection_timeout": TimeoutError("Connection timed out"),
+        "connection_refused": ConnectionRefusedError("Connection refused"),
+        "network_unreachable": OSError("Network is unreachable"),
     }
 
 
@@ -339,8 +334,8 @@ def network_error_simulation():
 def database_error_simulation():
     """Simulate database errors for testing."""
     return {
-        'connection_error': Exception("Database connection failed"),
-        'query_timeout': Exception("Query execution timeout"),
-        'constraint_violation': Exception("Constraint violation"),
-        'deadlock': Exception("Deadlock detected")
+        "connection_error": Exception("Database connection failed"),
+        "query_timeout": Exception("Query execution timeout"),
+        "constraint_violation": Exception("Constraint violation"),
+        "deadlock": Exception("Deadlock detected"),
     }

@@ -7,10 +7,17 @@ from typing import Any, Optional
 def validate_as_number(as_num: Any) -> Optional[int]:
     """Validate and return AS number if valid."""
     try:
+        # Handle special float values
+        if isinstance(as_num, float):
+            if not (as_num == as_num):  # Check for NaN
+                return None
+            if as_num == float("inf") or as_num == float("-inf"):
+                return None
+
         as_val = int(as_num)
         if 0 <= as_val <= 4294967295:  # Valid 32-bit AS range
             return as_val
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         pass
     return None
 
@@ -18,6 +25,9 @@ def validate_as_number(as_num: Any) -> Optional[int]:
 def validate_ip_address(ip: Any) -> Optional[str]:
     """Validate and return IP address if valid."""
     try:
+        # Only accept string input for IP addresses
+        if not isinstance(ip, str):
+            return None
         # Try IPv4 first
         addr = ipaddress.ip_address(ip)
         return str(addr)
@@ -28,6 +38,9 @@ def validate_ip_address(ip: Any) -> Optional[str]:
 def validate_prefix(prefix: Any) -> Optional[str]:
     """Validate and return network prefix if valid."""
     try:
+        # Only accept string input and must contain '/'
+        if not isinstance(prefix, str) or '/' not in prefix:
+            return None
         network = ipaddress.ip_network(prefix, strict=False)
         return str(network)
     except (ValueError, TypeError, ipaddress.AddressValueError, ipaddress.NetmaskValueError):
@@ -44,10 +57,17 @@ def validate_message_length(length: int, max_size: int = 1048576) -> bool:
 def validate_port(port: Any) -> Optional[int]:
     """Validate TCP/UDP port number."""
     try:
+        # Handle special float values
+        if isinstance(port, float):
+            if not (port == port):  # Check for NaN
+                return None
+            if port == float("inf") or port == float("-inf"):
+                return None
+
         port_val = int(port)
         if 1 <= port_val <= 65535:
             return port_val
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         pass
     return None
 
@@ -62,8 +82,8 @@ def sanitize_log_data(data: Any, max_len: int = 100) -> str:
         return hex_str
 
     str_data = str(data)
-    # Remove potential control characters
-    sanitized = ''.join(char if char.isprintable() else '?' for char in str_data)
+    # Remove potential control characters (but keep tabs)
+    sanitized = "".join(char if char.isprintable() or char == '\t' else "?" for char in str_data)
 
     if len(sanitized) > max_len:
         return sanitized[:max_len] + "..."

@@ -94,28 +94,28 @@ class BMPParser:
             raise ValueError("Insufficient data for per-peer header")
 
         header = {}
-        header['peer_type'] = data[0]
+        header["peer_type"] = data[0]
         flags = data[1]
-        header['peer_flags'] = {
-            'v_flag': bool(flags & 0x80),  # 0 = IPv4, 1 = IPv6
-            'l_flag': bool(flags & 0x40),  # Legacy 2-byte AS
-            'a_flag': bool(flags & 0x20),  # AS path
+        header["peer_flags"] = {
+            "v_flag": bool(flags & 0x80),  # 0 = IPv4, 1 = IPv6
+            "l_flag": bool(flags & 0x40),  # Legacy 2-byte AS
+            "a_flag": bool(flags & 0x20),  # AS path
         }
 
-        header['peer_distinguisher'] = data[2:10]
+        header["peer_distinguisher"] = data[2:10]
 
         # Peer address (16 bytes, IPv4 mapped to IPv6)
-        if header['peer_flags']['v_flag']:
-            header['peer_ip'] = str(ipaddress.IPv6Address(data[10:26]))
+        if header["peer_flags"]["v_flag"]:
+            header["peer_ip"] = str(ipaddress.IPv6Address(data[10:26]))
         else:
-            header['peer_ip'] = str(ipaddress.IPv4Address(data[22:26]))
+            header["peer_ip"] = str(ipaddress.IPv4Address(data[22:26]))
 
-        header['peer_as'] = struct.unpack(">I", data[26:30])[0]
-        header['peer_bgp_id'] = str(ipaddress.IPv4Address(data[30:34]))
+        header["peer_as"] = struct.unpack(">I", data[26:30])[0]
+        header["peer_bgp_id"] = str(ipaddress.IPv4Address(data[30:34]))
 
         # Timestamps
-        header['timestamp_sec'] = struct.unpack(">I", data[34:38])[0]
-        header['timestamp_usec'] = struct.unpack(">I", data[38:42])[0]
+        header["timestamp_sec"] = struct.unpack(">I", data[34:38])[0]
+        header["timestamp_usec"] = struct.unpack(">I", data[38:42])[0]
 
         return header, 42
 
@@ -125,9 +125,9 @@ class BMPParser:
         bgp_msg = data[offset:]
 
         result = {
-            'type': 'route_monitoring',
-            'peer': peer_header,
-            'bgp_message': self._parse_bgp_message(bgp_msg)
+            "type": "route_monitoring",
+            "peer": peer_header,
+            "bgp_message": self._parse_bgp_message(bgp_msg),
         }
         return result
 
@@ -148,34 +148,36 @@ class BMPParser:
         elif msg_type == BGPMessageType.OPEN:
             return self._parse_bgp_open(msg_data)
         else:
-            return {'type': msg_type, 'data': msg_data.hex()}
+            return {"type": msg_type, "data": msg_data.hex()}
 
     def _parse_bgp_update(self, data: bytes) -> Dict[str, Any]:
         """Parse BGP UPDATE message."""
         offset = 0
-        update = {'type': 'UPDATE'}
+        update = {"type": "UPDATE"}
 
         # Withdrawn routes length
-        withdrawn_len = struct.unpack(">H", data[offset:offset+2])[0]
+        withdrawn_len = struct.unpack(">H", data[offset : offset + 2])[0]
         offset += 2
 
         # Parse withdrawn routes
         if withdrawn_len > 0:
-            update['withdrawn'] = self._parse_nlri(data[offset:offset+withdrawn_len])
+            update["withdrawn"] = self._parse_nlri(data[offset : offset + withdrawn_len])
             offset += withdrawn_len
 
         # Path attributes length
-        path_attr_len = struct.unpack(">H", data[offset:offset+2])[0]
+        path_attr_len = struct.unpack(">H", data[offset : offset + 2])[0]
         offset += 2
 
         # Parse path attributes
         if path_attr_len > 0:
-            update['attributes'] = self._parse_path_attributes(data[offset:offset+path_attr_len])
+            update["attributes"] = self._parse_path_attributes(
+                data[offset : offset + path_attr_len]
+            )
             offset += path_attr_len
 
         # NLRI (Network Layer Reachability Information)
         if offset < len(data):
-            update['nlri'] = self._parse_nlri(data[offset:])
+            update["nlri"] = self._parse_nlri(data[offset:])
 
         return update
 
@@ -201,7 +203,7 @@ class BMPParser:
             if extended:
                 if offset + 2 > len(data):
                     break
-                attr_len = struct.unpack(">H", data[offset:offset+2])[0]
+                attr_len = struct.unpack(">H", data[offset : offset + 2])[0]
                 offset += 2
             else:
                 if offset + 1 > len(data):
@@ -212,18 +214,18 @@ class BMPParser:
             if offset + attr_len > len(data):
                 break
 
-            attr_data = data[offset:offset + attr_len]
+            attr_data = data[offset : offset + attr_len]
             offset += attr_len
 
             attr = {
-                'type': attr_type,
-                'flags': {
-                    'optional': optional,
-                    'transitive': transitive,
-                    'partial': partial,
-                    'extended': extended
+                "type": attr_type,
+                "flags": {
+                    "optional": optional,
+                    "transitive": transitive,
+                    "partial": partial,
+                    "extended": extended,
                 },
-                'value': self._parse_attribute_value(attr_type, attr_data)
+                "value": self._parse_attribute_value(attr_type, attr_data),
             }
             attributes.append(attr)
 
@@ -231,22 +233,29 @@ class BMPParser:
 
     def _parse_attribute_value(self, attr_type: int, data: bytes) -> Any:
         """Parse specific BGP attribute values."""
+        if not data:
+            return None
+
         if attr_type == 1:  # ORIGIN
-            return data[0]
+            return data[0] if len(data) >= 1 else 0
         elif attr_type == 2:  # AS_PATH
             return self._parse_as_path(data)
         elif attr_type == 3:  # NEXT_HOP
-            return str(ipaddress.IPv4Address(data))
+            if len(data) >= 4:
+                return str(ipaddress.IPv4Address(data[:4]))
+            return "0.0.0.0"
         elif attr_type == 4:  # MED
-            return struct.unpack(">I", data)[0]
+            return struct.unpack(">I", data)[0] if len(data) >= 4 else 0
         elif attr_type == 5:  # LOCAL_PREF
-            return struct.unpack(">I", data)[0]
+            return struct.unpack(">I", data)[0] if len(data) >= 4 else 0
         elif attr_type == 6:  # ATOMIC_AGGREGATE
             return True
         elif attr_type == 7:  # AGGREGATOR
-            as_num = struct.unpack(">I", data[0:4])[0]
-            ip = str(ipaddress.IPv4Address(data[4:8]))
-            return {'as': as_num, 'ip': ip}
+            if len(data) >= 8:
+                as_num = struct.unpack(">I", data[0:4])[0]
+                ip = str(ipaddress.IPv4Address(data[4:8]))
+                return {"as": as_num, "ip": ip}
+            return {"as": 0, "ip": "0.0.0.0"}
         elif attr_type == 8:  # COMMUNITIES
             return self._parse_communities(data)
         elif attr_type == 14:  # MP_REACH_NLRI
@@ -278,14 +287,13 @@ class BMPParser:
 
             as_numbers = []
             for i in range(seg_len):
-                as_num = struct.unpack(">I", data[offset:offset+4])[0]
+                as_num = struct.unpack(">I", data[offset : offset + 4])[0]
                 as_numbers.append(as_num)
                 offset += 4
 
-            segments.append({
-                'type': 'AS_SET' if seg_type == 1 else 'AS_SEQUENCE',
-                'as_numbers': as_numbers
-            })
+            segments.append(
+                {"type": "AS_SET" if seg_type == 1 else "AS_SEQUENCE", "as_numbers": as_numbers}
+            )
 
         return segments
 
@@ -294,7 +302,7 @@ class BMPParser:
         communities = []
         for i in range(0, len(data), 4):
             if i + 4 <= len(data):
-                comm = struct.unpack(">HH", data[i:i+4])
+                comm = struct.unpack(">HH", data[i : i + 4])
                 communities.append(f"{comm[0]}:{comm[1]}")
         return communities
 
@@ -304,7 +312,7 @@ class BMPParser:
         for i in range(0, len(data), 8):
             if i + 8 <= len(data):
                 # Simple hex representation for now
-                communities.append(data[i:i+8].hex())
+                communities.append(data[i : i + 8].hex())
         return communities
 
     def _parse_large_communities(self, data: bytes) -> List[str]:
@@ -312,7 +320,7 @@ class BMPParser:
         communities = []
         for i in range(0, len(data), 12):
             if i + 12 <= len(data):
-                parts = struct.unpack(">III", data[i:i+12])
+                parts = struct.unpack(">III", data[i : i + 12])
                 communities.append(f"{parts[0]}:{parts[1]}:{parts[2]}")
         return communities
 
@@ -328,7 +336,7 @@ class BMPParser:
         offset = 4
         next_hop = None
         if nh_len > 0:
-            nh_data = data[offset:offset+nh_len]
+            nh_data = data[offset : offset + nh_len]
             if afi == AFI.IPV4:
                 next_hop = str(ipaddress.IPv4Address(nh_data[:4]))
             elif afi == AFI.IPV6:
@@ -345,12 +353,7 @@ class BMPParser:
             else:
                 nlri = self._parse_nlri(data[offset:], afi)
 
-        return {
-            'afi': afi,
-            'safi': safi,
-            'next_hop': next_hop,
-            'nlri': nlri
-        }
+        return {"afi": afi, "safi": safi, "next_hop": next_hop, "nlri": nlri}
 
     def _parse_mp_unreach_nlri(self, data: bytes) -> Dict[str, Any]:
         """Parse MP_UNREACH_NLRI attribute."""
@@ -367,11 +370,7 @@ class BMPParser:
             else:
                 nlri = self._parse_nlri(data[3:], afi)
 
-        return {
-            'afi': afi,
-            'safi': safi,
-            'withdrawn': nlri
-        }
+        return {"afi": afi, "safi": safi, "withdrawn": nlri}
 
     def _parse_nlri(self, data: bytes, afi: int = AFI.IPV4) -> List[str]:
         """Parse NLRI (Network Layer Reachability Information)."""
@@ -389,15 +388,15 @@ class BMPParser:
             if offset + prefix_bytes > len(data):
                 break
 
-            prefix_data = data[offset:offset + prefix_bytes]
+            prefix_data = data[offset : offset + prefix_bytes]
             offset += prefix_bytes
 
             # Pad to full length
             if afi == AFI.IPV6:
-                padded = prefix_data + b'\x00' * (16 - len(prefix_data))
+                padded = prefix_data + b"\x00" * (16 - len(prefix_data))
                 prefix = ipaddress.IPv6Network((padded, prefix_len))
             else:
-                padded = prefix_data + b'\x00' * (4 - len(prefix_data))
+                padded = prefix_data + b"\x00" * (4 - len(prefix_data))
                 prefix = ipaddress.IPv4Network((padded, prefix_len))
 
             nlri.append(str(prefix))
@@ -415,13 +414,13 @@ class BMPParser:
 
             # EVPN NLRI format: Type (1 byte) + Length (2 bytes) + Value
             route_type = data[offset]
-            route_len = struct.unpack(">H", data[offset+1:offset+3])[0]
+            route_len = struct.unpack(">H", data[offset + 1 : offset + 3])[0]
             offset += 3
 
             if offset + route_len > len(data):
                 break
 
-            route_data = data[offset:offset + route_len]
+            route_data = data[offset : offset + route_len]
             offset += route_len
 
             evpn_route = self._parse_evpn_route(route_type, route_data)
@@ -432,32 +431,179 @@ class BMPParser:
 
     def _parse_evpn_route(self, route_type: int, data: bytes) -> Optional[Dict[str, Any]]:
         """Parse specific EVPN route types."""
-        route = {'type': route_type}
+        route = {"type": route_type}
 
         try:
             if route_type == 1:  # Ethernet Auto-Discovery
-                route['name'] = 'Ethernet Auto-Discovery'
-                # Parse RD, ESI, Ethernet Tag, MPLS Label
+                route["name"] = "Ethernet Auto-Discovery"
+                if len(data) >= 25:  # RD(8) + ESI(10) + EthTag(4) + Label(3) = 25 bytes minimum
+                    # Parse Route Distinguisher (8 bytes)
+                    route["rd"] = self._parse_route_distinguisher(data[0:8])
+                    # Parse ESI (10 bytes)
+                    route["esi"] = data[8:18].hex()
+                    # Parse Ethernet Tag (4 bytes)
+                    route["eth_tag"] = struct.unpack(">I", data[18:22])[0]
+                    # Parse MPLS Label (3 bytes)
+                    if len(data) >= 25:
+                        label_bytes = data[22:25]
+                        # MPLS label format in 3 bytes: 20 bits label + 3 bits EXP + 1 bit S (no TTL)
+                        # Extract 24 bits from 3 bytes, then parse fields
+                        label_data = (label_bytes[0] << 16) | (label_bytes[1] << 8) | label_bytes[2]
+                        route["mpls_label"] = (label_data >> 4) & 0xFFFFF  # 20 bits (bits 23-4)
+                        route["mpls_exp"] = (label_data >> 1) & 0x07  # 3 bits (bits 3-1)
+                        route["mpls_s"] = label_data & 0x01  # 1 bit (bit 0)
             elif route_type == 2:  # MAC/IP Advertisement
-                route['name'] = 'MAC/IP Advertisement'
+                route["name"] = "MAC/IP Advertisement"
                 if len(data) >= 25:
                     # Parse RD (8 bytes)
-                    route['rd'] = self._parse_route_distinguisher(data[0:8])
+                    route["rd"] = self._parse_route_distinguisher(data[0:8])
                     # ESI (10 bytes)
-                    route['esi'] = data[8:18].hex()
+                    route["esi"] = data[8:18].hex()
                     # Ethernet Tag (4 bytes)
-                    route['eth_tag'] = struct.unpack(">I", data[18:22])[0]
+                    route["eth_tag"] = struct.unpack(">I", data[18:22])[0]
                     # MAC length (1 byte)
                     mac_len = data[22]
-                    if mac_len == 48 and len(data) >= 29:
+                    offset = 23
+                    if mac_len == 48 and len(data) >= offset + 6:
                         # MAC address (6 bytes)
-                        route['mac'] = ':'.join(f'{b:02x}' for b in data[23:29])
+                        route["mac"] = ":".join(f"{b:02x}" for b in data[offset:offset + 6])
+                        offset += 6
+
+                        # Parse IP address length and IP address (variable)
+                        if len(data) > offset:
+                            ip_len_bits = data[offset]
+                            offset += 1
+                            route["ip_length"] = ip_len_bits
+
+                            if ip_len_bits > 0:
+                                ip_len_bytes = (ip_len_bits + 7) // 8
+                                if len(data) >= offset + ip_len_bytes:
+                                    ip_bytes = data[offset:offset + ip_len_bytes]
+                                    if ip_len_bits == 32:  # IPv4
+                                        route["ip_address"] = str(ipaddress.IPv4Address(ip_bytes))
+                                    elif ip_len_bits == 128:  # IPv6
+                                        route["ip_address"] = str(ipaddress.IPv6Address(ip_bytes))
+                                    else:
+                                        route["ip_address"] = ip_bytes.hex()
+                                    offset += ip_len_bytes
+
+                            # Parse MPLS Label1 (3 bytes)
+                            if len(data) >= offset + 3:
+                                label_bytes = data[offset:offset + 3]
+                                label_data = (label_bytes[0] << 16) | (label_bytes[1] << 8) | label_bytes[2]
+                                route["mpls_label1"] = (label_data >> 4) & 0xFFFFF
+                                route["mpls_exp1"] = (label_data >> 1) & 0x07
+                                route["mpls_s1"] = label_data & 0x01
+                                offset += 3
+
+                                # Parse MPLS Label2 if present (3 bytes)
+                                if len(data) >= offset + 3:
+                                    label_bytes = data[offset:offset + 3]
+                                    label_data = (label_bytes[0] << 16) | (label_bytes[1] << 8) | label_bytes[2]
+                                    route["mpls_label2"] = (label_data >> 4) & 0xFFFFF
+                                    route["mpls_exp2"] = (label_data >> 1) & 0x07
+                                    route["mpls_s2"] = label_data & 0x01
             elif route_type == 3:  # Inclusive Multicast Ethernet Tag
-                route['name'] = 'Inclusive Multicast'
+                route["name"] = "Inclusive Multicast"
+                if len(data) >= 12:  # RD(8) + EthTag(4) = 12 bytes minimum
+                    # Parse Route Distinguisher (8 bytes)
+                    route["rd"] = self._parse_route_distinguisher(data[0:8])
+                    # Parse Ethernet Tag (4 bytes)
+                    route["eth_tag"] = struct.unpack(">I", data[8:12])[0]
+                    # Parse IP address length and IP address (variable)
+                    if len(data) > 12:
+                        ip_len_bits = data[12]
+                        route["ip_length"] = ip_len_bits
+
+                        if ip_len_bits > 0:
+                            ip_len_bytes = (ip_len_bits + 7) // 8
+                            if len(data) >= 13 + ip_len_bytes:
+                                ip_bytes = data[13:13 + ip_len_bytes]
+                                if ip_len_bits == 32:  # IPv4
+                                    route["originating_ip"] = str(ipaddress.IPv4Address(ip_bytes))
+                                elif ip_len_bits == 128:  # IPv6
+                                    route["originating_ip"] = str(ipaddress.IPv6Address(ip_bytes))
+                                else:
+                                    route["originating_ip"] = ip_bytes.hex()
             elif route_type == 4:  # Ethernet Segment
-                route['name'] = 'Ethernet Segment'
+                route["name"] = "Ethernet Segment"
+                if len(data) >= 18:
+                    # Parse Route Distinguisher (8 bytes)
+                    route["rd"] = self._parse_route_distinguisher(data[0:8])
+                    # Parse ESI (10 bytes)
+                    route["esi"] = data[8:18].hex()
+                    # Parse IP Address Length + IP Address (variable)
+                    if len(data) > 18:
+                        ip_len_bits = data[18]
+                        ip_len_bytes = (ip_len_bits + 7) // 8  # Round up to nearest byte
+                        if ip_len_bits > 0 and len(data) >= 19 + ip_len_bytes:
+                            ip_bytes = data[19 : 19 + ip_len_bytes]
+                            if ip_len_bits == 32:  # IPv4
+                                route["originating_ip"] = str(ipaddress.IPv4Address(ip_bytes))
+                            elif ip_len_bits == 128:  # IPv6
+                                route["originating_ip"] = str(ipaddress.IPv6Address(ip_bytes))
+                            else:
+                                # Handle partial IP addresses or other lengths
+                                route["originating_ip"] = ip_bytes.hex()
+                            route["ip_length"] = ip_len_bits
             elif route_type == 5:  # IP Prefix
-                route['name'] = 'IP Prefix'
+                route["name"] = "IP Prefix"
+                if len(data) >= 22:  # RD(8) + ESI(10) + EthTag(4) = 22 bytes minimum
+                    # Parse Route Distinguisher (8 bytes)
+                    route["rd"] = self._parse_route_distinguisher(data[0:8])
+                    # Parse ESI (10 bytes)
+                    route["esi"] = data[8:18].hex()
+                    # Parse Ethernet Tag (4 bytes)
+                    route["eth_tag"] = struct.unpack(">I", data[18:22])[0]
+                    offset = 22
+
+                    # Parse IP Prefix Length + IP Prefix (variable)
+                    if len(data) > offset:
+                        ip_prefix_len = data[offset]
+                        offset += 1
+                        route["ip_prefix_length"] = ip_prefix_len
+
+                        if ip_prefix_len > 0:
+                            ip_prefix_bytes = (ip_prefix_len + 7) // 8
+                            if len(data) >= offset + ip_prefix_bytes:
+                                ip_prefix_data = data[offset:offset + ip_prefix_bytes]
+                                if ip_prefix_len <= 32:  # IPv4
+                                    # Pad to 4 bytes for IPv4
+                                    padded_ip = ip_prefix_data + bytes(4 - len(ip_prefix_data))
+                                    route["ip_prefix"] = f"{ipaddress.IPv4Address(padded_ip)}/{ip_prefix_len}"
+                                elif ip_prefix_len <= 128:  # IPv6
+                                    # Pad to 16 bytes for IPv6
+                                    padded_ip = ip_prefix_data + bytes(16 - len(ip_prefix_data))
+                                    route["ip_prefix"] = f"{ipaddress.IPv6Address(padded_ip)}/{ip_prefix_len}"
+                                else:
+                                    route["ip_prefix"] = f"{ip_prefix_data.hex()}/{ip_prefix_len}"
+                                offset += ip_prefix_bytes
+
+                        # Parse Gateway IP Address Length + Gateway IP (variable)
+                        if len(data) > offset:
+                            gw_ip_len = data[offset]
+                            offset += 1
+                            route["gateway_ip_length"] = gw_ip_len
+
+                            if gw_ip_len > 0:
+                                gw_ip_bytes = (gw_ip_len + 7) // 8
+                                if len(data) >= offset + gw_ip_bytes:
+                                    gw_ip_data = data[offset:offset + gw_ip_bytes]
+                                    if gw_ip_len == 32:  # IPv4
+                                        route["gateway_ip"] = str(ipaddress.IPv4Address(gw_ip_data))
+                                    elif gw_ip_len == 128:  # IPv6
+                                        route["gateway_ip"] = str(ipaddress.IPv6Address(gw_ip_data))
+                                    else:
+                                        route["gateway_ip"] = gw_ip_data.hex()
+                                    offset += gw_ip_bytes
+
+                            # Parse MPLS Label (3 bytes)
+                            if len(data) >= offset + 3:
+                                label_bytes = data[offset:offset + 3]
+                                label_data = (label_bytes[0] << 16) | (label_bytes[1] << 8) | label_bytes[2]
+                                route["mpls_label"] = (label_data >> 4) & 0xFFFFF
+                                route["mpls_exp"] = (label_data >> 1) & 0x07
+                                route["mpls_s"] = label_data & 0x01
 
             return route
         except Exception as e:
@@ -486,24 +632,24 @@ class BMPParser:
         peer_header, offset = self._parse_per_peer_header(data)
 
         # Local address (16 bytes)
-        local_ip = str(ipaddress.IPv6Address(data[offset:offset+16]))
+        local_ip = str(ipaddress.IPv6Address(data[offset : offset + 16]))
         offset += 16
 
         # Local port and remote port
-        local_port = struct.unpack(">H", data[offset:offset+2])[0]
-        remote_port = struct.unpack(">H", data[offset+2:offset+4])[0]
+        local_port = struct.unpack(">H", data[offset : offset + 2])[0]
+        remote_port = struct.unpack(">H", data[offset + 2 : offset + 4])[0]
         offset += 4
 
         # Sent and received OPEN messages
         sent_open = self._parse_bgp_message(data[offset:])
 
         return {
-            'type': 'peer_up',
-            'peer': peer_header,
-            'local_ip': local_ip,
-            'local_port': local_port,
-            'remote_port': remote_port,
-            'sent_open': sent_open
+            "type": "peer_up",
+            "peer": peer_header,
+            "local_ip": local_ip,
+            "local_port": local_port,
+            "remote_port": remote_port,
+            "sent_open": sent_open,
         }
 
     def _parse_peer_down(self, data: bytes) -> Dict[str, Any]:
@@ -512,34 +658,24 @@ class BMPParser:
 
         reason = data[offset] if offset < len(data) else 0
 
-        return {
-            'type': 'peer_down',
-            'peer': peer_header,
-            'reason': reason
-        }
+        return {"type": "peer_down", "peer": peer_header, "reason": reason}
 
     def _parse_initiation(self, data: bytes) -> Dict[str, Any]:
         """Parse INITIATION message."""
         tlvs = self._parse_tlvs(data)
-        return {
-            'type': 'initiation',
-            'information': tlvs
-        }
+        return {"type": "initiation", "information": tlvs}
 
     def _parse_termination(self, data: bytes) -> Dict[str, Any]:
         """Parse TERMINATION message."""
         tlvs = self._parse_tlvs(data)
-        return {
-            'type': 'termination',
-            'information': tlvs
-        }
+        return {"type": "termination", "information": tlvs}
 
     def _parse_stats_report(self, data: bytes) -> Dict[str, Any]:
         """Parse STATISTICS_REPORT message."""
         peer_header, offset = self._parse_per_peer_header(data)
 
         # Stats count
-        stats_count = struct.unpack(">I", data[offset:offset+4])[0]
+        stats_count = struct.unpack(">I", data[offset : offset + 4])[0]
         offset += 4
 
         stats = []
@@ -547,14 +683,14 @@ class BMPParser:
             if offset + 4 > len(data):
                 break
 
-            stat_type = struct.unpack(">H", data[offset:offset+2])[0]
-            stat_len = struct.unpack(">H", data[offset+2:offset+4])[0]
+            stat_type = struct.unpack(">H", data[offset : offset + 2])[0]
+            stat_len = struct.unpack(">H", data[offset + 2 : offset + 4])[0]
             offset += 4
 
             if offset + stat_len > len(data):
                 break
 
-            stat_data = data[offset:offset+stat_len]
+            stat_data = data[offset : offset + stat_len]
             offset += stat_len
 
             if stat_len == 4:
@@ -564,16 +700,9 @@ class BMPParser:
             else:
                 value = stat_data.hex()
 
-            stats.append({
-                'type': stat_type,
-                'value': value
-            })
+            stats.append({"type": stat_type, "value": value})
 
-        return {
-            'type': 'stats_report',
-            'peer': peer_header,
-            'stats': stats
-        }
+        return {"type": "stats_report", "peer": peer_header, "stats": stats}
 
     def _parse_tlvs(self, data: bytes) -> List[Dict[str, Any]]:
         """Parse TLV (Type-Length-Value) fields."""
@@ -584,32 +713,29 @@ class BMPParser:
             if offset + 4 > len(data):
                 break
 
-            tlv_type = struct.unpack(">H", data[offset:offset+2])[0]
-            tlv_len = struct.unpack(">H", data[offset+2:offset+4])[0]
+            tlv_type = struct.unpack(">H", data[offset : offset + 2])[0]
+            tlv_len = struct.unpack(">H", data[offset + 2 : offset + 4])[0]
             offset += 4
 
             if offset + tlv_len > len(data):
                 break
 
-            tlv_value = data[offset:offset+tlv_len]
+            tlv_value = data[offset : offset + tlv_len]
             offset += tlv_len
 
             if tlv_type in [0, 1, 2]:  # String types
-                value = tlv_value.decode('utf-8', errors='replace')
+                value = tlv_value.decode("utf-8", errors="replace")
             else:
                 value = tlv_value.hex()
 
-            tlvs.append({
-                'type': tlv_type,
-                'value': value
-            })
+            tlvs.append({"type": tlv_type, "value": value})
 
         return tlvs
 
     def _parse_bgp_open(self, data: bytes) -> Dict[str, Any]:
         """Parse BGP OPEN message."""
         if len(data) < 10:
-            return {'type': 'OPEN', 'error': 'Invalid message length'}
+            return {"type": "OPEN", "error": "Invalid message length"}
 
         version = data[0]
         my_as = struct.unpack(">H", data[1:3])[0]
@@ -619,15 +745,15 @@ class BMPParser:
 
         capabilities = []
         if opt_len > 0 and len(data) >= 10 + opt_len:
-            capabilities = self._parse_capabilities(data[10:10+opt_len])
+            capabilities = self._parse_capabilities(data[10 : 10 + opt_len])
 
         return {
-            'type': 'OPEN',
-            'version': version,
-            'as': my_as,
-            'hold_time': hold_time,
-            'bgp_id': bgp_id,
-            'capabilities': capabilities
+            "type": "OPEN",
+            "version": version,
+            "as": my_as,
+            "hold_time": hold_time,
+            "bgp_id": bgp_id,
+            "capabilities": capabilities,
         }
 
     def _parse_capabilities(self, data: bytes) -> List[Dict[str, Any]]:
@@ -646,12 +772,9 @@ class BMPParser:
             if offset + cap_len > len(data):
                 break
 
-            cap_value = data[offset:offset + cap_len]
+            cap_value = data[offset : offset + cap_len]
             offset += cap_len
 
-            capabilities.append({
-                'code': cap_code,
-                'value': cap_value.hex()
-            })
+            capabilities.append({"code": cap_code, "value": cap_value.hex()})
 
         return capabilities

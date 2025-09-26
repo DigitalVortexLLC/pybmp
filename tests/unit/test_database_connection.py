@@ -7,8 +7,10 @@ from contextlib import asynccontextmanager
 
 from src.database.connection import DatabasePool
 from tests.fixtures.database_fixtures import (
-    generate_mock_route_data, generate_mock_session_data,
-    MOCK_DB_RESPONSES, EDGE_CASE_DATA
+    generate_mock_route_data,
+    generate_mock_session_data,
+    MOCK_DB_RESPONSES,
+    EDGE_CASE_DATA,
 )
 
 
@@ -29,7 +31,7 @@ class TestDatabasePool:
         """Test successful database connection."""
         db_pool = DatabasePool(test_settings)
 
-        with patch('src.database.connection.asyncpg.create_pool') as mock_create_pool:
+        with patch("src.database.connection.asyncpg.create_pool") as mock_create_pool:
             mock_pool = AsyncMock()
             mock_create_pool.return_value = mock_pool
 
@@ -46,7 +48,7 @@ class TestDatabasePool:
                 max_size=test_settings.db_pool_size,
                 max_queries=50000,
                 max_cached_statement_lifetime=300,
-                command_timeout=60
+                command_timeout=60,
             )
 
     @pytest.mark.asyncio
@@ -55,7 +57,7 @@ class TestDatabasePool:
         """Test database connection failure."""
         db_pool = DatabasePool(test_settings)
 
-        with patch('src.database.connection.asyncpg.create_pool') as mock_create_pool:
+        with patch("src.database.connection.asyncpg.create_pool") as mock_create_pool:
             mock_create_pool.side_effect = Exception("Connection failed")
 
             with pytest.raises(Exception, match="Connection failed"):
@@ -128,7 +130,7 @@ class TestDatabasePool:
         db_pool = DatabasePool(test_settings)
         mock_pool = AsyncMock()
         mock_connection = AsyncMock()
-        mock_records = [{'id': 1, 'name': 'test'}]
+        mock_records = [{"id": 1, "name": "test"}]
         mock_connection.fetch.return_value = mock_records
 
         @asynccontextmanager
@@ -150,7 +152,7 @@ class TestDatabasePool:
         db_pool = DatabasePool(test_settings)
         mock_pool = AsyncMock()
         mock_connection = AsyncMock()
-        mock_record = {'id': 1, 'name': 'test'}
+        mock_record = {"id": 1, "name": "test"}
         mock_connection.fetchrow.return_value = mock_record
 
         @asynccontextmanager
@@ -241,15 +243,15 @@ class TestDatabasePool:
         db_pool.pool = mock_pool
 
         route_data = {
-            'prefix': '10.0.1.0/24',
-            'router_ip': '192.0.2.1',
-            'peer_ip': '10.0.0.1',
-            'next_hop': '192.0.2.2',
-            'family': 'IPv4',
-            'is_withdrawn': False
+            "prefix": "10.0.1.0/24",
+            "router_ip": "192.0.2.1",
+            "peer_ip": "10.0.0.1",
+            "next_hop": "192.0.2.2",
+            "family": "IPv4",
+            "is_withdrawn": False,
         }
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -267,7 +269,7 @@ class TestDatabasePool:
         db_pool = DatabasePool(test_settings)
         mock_pool = AsyncMock()
         mock_connection = AsyncMock()
-        mock_connection.fetchrow.return_value = {'id': 123}
+        mock_connection.fetchrow.return_value = {"id": 123}
 
         @asynccontextmanager
         async def mock_acquire():
@@ -277,10 +279,10 @@ class TestDatabasePool:
         db_pool.pool = mock_pool
 
         session_data = {
-            'router_ip': '192.0.2.1',
-            'router_name': 'test-router',
-            'session_start': datetime.utcnow(),
-            'status': 'active'
+            "router_ip": "192.0.2.1",
+            "router_name": "test-router",
+            "session_start": datetime.utcnow(),
+            "status": "active",
         }
 
         result = await db_pool.create_or_update_session(session_data)
@@ -305,13 +307,13 @@ class TestDatabasePool:
         mock_pool.acquire.return_value = mock_acquire()
         db_pool.pool = mock_pool
 
-        await db_pool.close_session('192.0.2.1', 123)
+        await db_pool.close_session("192.0.2.1", 123)
 
         mock_connection.execute.assert_called_once()
         call_args = mock_connection.execute.call_args
         assert "UPDATE router_sessions" in call_args[0][0]
         assert call_args[0][1] == 123
-        assert call_args[0][2] == '192.0.2.1'
+        assert call_args[0][2] == "192.0.2.1"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -329,14 +331,14 @@ class TestDatabasePool:
         db_pool.pool = mock_pool
 
         stats_data = {
-            'router_ip': '192.0.2.1',
-            'peer_ip': '10.0.0.1',
-            'peer_as': 65001,
-            'routes_received': 1000,
-            'withdrawals_received': 50
+            "router_ip": "192.0.2.1",
+            "peer_ip": "10.0.0.1",
+            "peer_as": 65001,
+            "routes_received": 1000,
+            "withdrawals_received": 50,
         }
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -363,7 +365,7 @@ class TestDatabasePool:
         mock_pool.acquire.return_value = mock_acquire()
         db_pool.pool = mock_pool
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -388,7 +390,7 @@ class TestDatabasePool:
         mock_pool.acquire.return_value = mock_acquire()
         db_pool.pool = mock_pool
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -403,7 +405,7 @@ class TestDatabasePool:
         db_pool = DatabasePool(test_settings)
         mock_pool = AsyncMock()
         mock_connection = AsyncMock()
-        mock_sessions = MOCK_DB_RESPONSES['active_sessions']
+        mock_sessions = MOCK_DB_RESPONSES["active_sessions"]
         mock_connection.fetch.return_value = [dict(session) for session in mock_sessions]
 
         @asynccontextmanager
@@ -428,7 +430,7 @@ class TestDatabasePool:
         db_pool = DatabasePool(test_settings)
         mock_pool = AsyncMock()
         mock_connection = AsyncMock()
-        mock_summary = MOCK_DB_RESPONSES['route_summary']
+        mock_summary = MOCK_DB_RESPONSES["route_summary"]
         mock_connection.fetchrow.return_value = mock_summary
 
         @asynccontextmanager
@@ -489,11 +491,11 @@ class TestDatabasePoolEdgeCases:
         # Create routes with missing fields
         routes = [
             {
-                'time': datetime.utcnow(),
-                'router_ip': '192.0.2.1',
-                'peer_ip': '10.0.0.1',
-                'prefix': '10.0.1.0/24',
-                'family': 'IPv4'
+                "time": datetime.utcnow(),
+                "router_ip": "192.0.2.1",
+                "peer_ip": "10.0.0.1",
+                "prefix": "10.0.1.0/24",
+                "family": "IPv4"
                 # Missing many fields
             }
         ]
@@ -549,9 +551,7 @@ class TestDatabasePoolEdgeCases:
         # Run concurrent operations
         tasks = []
         for i in range(10):
-            task = asyncio.create_task(
-                db_pool.execute(f"SELECT {i}", i)
-            )
+            task = asyncio.create_task(db_pool.execute(f"SELECT {i}", i))
             tasks.append(task)
 
         await asyncio.gather(*tasks)
@@ -575,15 +575,15 @@ class TestDatabasePoolEdgeCases:
         db_pool.pool = mock_pool
 
         route_data = {
-            'prefix': '10.0.1.0/24',
-            'router_ip': '192.0.2.1',
-            'peer_ip': '10.0.0.1',
-            'next_hop': '192.0.2.2',
-            'family': 'IPv4',
-            'is_withdrawn': True
+            "prefix": "10.0.1.0/24",
+            "router_ip": "192.0.2.1",
+            "peer_ip": "10.0.0.1",
+            "next_hop": "192.0.2.2",
+            "family": "IPv4",
+            "is_withdrawn": True,
         }
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -591,7 +591,7 @@ class TestDatabasePoolEdgeCases:
 
             call_args = mock_connection.execute.call_args
             # Should mark as withdrawn
-            assert call_args[0][6] == 'withdrawn'
+            assert call_args[0][6] == "withdrawn"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -609,12 +609,12 @@ class TestDatabasePoolEdgeCases:
         db_pool.pool = mock_pool
 
         stats_data = {
-            'router_ip': '192.0.2.1',
-            'peer_ip': '10.0.0.1'
+            "router_ip": "192.0.2.1",
+            "peer_ip": "10.0.0.1"
             # No explicit time provided
         }
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -631,7 +631,7 @@ class TestDatabasePoolEdgeCases:
         db_pool = DatabasePool(test_settings)
         mock_pool = AsyncMock()
         mock_connection = AsyncMock()
-        mock_connection.fetchrow.return_value = {'id': 456}
+        mock_connection.fetchrow.return_value = {"id": 456}
 
         @asynccontextmanager
         async def mock_acquire():
@@ -641,8 +641,8 @@ class TestDatabasePoolEdgeCases:
         db_pool.pool = mock_pool
 
         session_data = {
-            'router_ip': '192.0.2.1',
-            'session_start': datetime.utcnow()
+            "router_ip": "192.0.2.1",
+            "session_start": datetime.utcnow()
             # Missing optional fields
         }
 
@@ -652,4 +652,4 @@ class TestDatabasePoolEdgeCases:
         call_args = mock_connection.fetchrow.call_args
         # Should handle None values for optional fields
         assert call_args[0][2] is None  # router_name
-        assert call_args[0][4] == 'active'  # default status
+        assert call_args[0][4] == "active"  # default status

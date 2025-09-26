@@ -13,11 +13,7 @@ class TestRateLimiter:
     @pytest.mark.unit
     def test_rate_limiter_initialization(self):
         """Test rate limiter initialization."""
-        limiter = RateLimiter(
-            max_connections_per_ip=5,
-            max_messages_per_second=100,
-            burst_size=50
-        )
+        limiter = RateLimiter(max_connections_per_ip=5, max_messages_per_second=100, burst_size=50)
 
         assert limiter.max_connections_per_ip == 5
         assert limiter.max_messages_per_second == 100
@@ -177,7 +173,7 @@ class TestRateLimiter:
         assert limiter.message_tokens[ip] == 0
 
         # Mock time advancement
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             start_time = time.time()
             mock_time.return_value = start_time
 
@@ -197,7 +193,7 @@ class TestRateLimiter:
         limiter = RateLimiter(max_messages_per_second=100, burst_size=10)
         ip = "192.0.2.1"
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             start_time = time.time()
             mock_time.return_value = start_time
 
@@ -277,25 +273,21 @@ class TestRateLimiter:
 
         # Initially empty
         stats = limiter.get_stats()
-        assert stats['active_connections'] == {}
-        assert stats['total_ips'] == 0
-        assert stats['max_connections'] == 0
+        assert stats["active_connections"] == {}
+        assert stats["total_ips"] == 0
+        assert stats["max_connections"] == 0
 
         # Add some connections
-        limiter.connections_per_ip['192.0.2.1'] = 3
-        limiter.connections_per_ip['192.0.2.2'] = 5
-        limiter.connections_per_ip['10.0.0.1'] = 1
+        limiter.connections_per_ip["192.0.2.1"] = 3
+        limiter.connections_per_ip["192.0.2.2"] = 5
+        limiter.connections_per_ip["10.0.0.1"] = 1
 
         stats = limiter.get_stats()
-        expected_connections = {
-            '192.0.2.1': 3,
-            '192.0.2.2': 5,
-            '10.0.0.1': 1
-        }
+        expected_connections = {"192.0.2.1": 3, "192.0.2.2": 5, "10.0.0.1": 1}
 
-        assert stats['active_connections'] == expected_connections
-        assert stats['total_ips'] == 3
-        assert stats['max_connections'] == 5
+        assert stats["active_connections"] == expected_connections
+        assert stats["total_ips"] == 3
+        assert stats["max_connections"] == 5
 
     @pytest.mark.unit
     def test_get_stats_empty(self):
@@ -303,9 +295,9 @@ class TestRateLimiter:
         limiter = RateLimiter()
         stats = limiter.get_stats()
 
-        assert stats['active_connections'] == {}
-        assert stats['total_ips'] == 0
-        assert stats['max_connections'] == 0
+        assert stats["active_connections"] == {}
+        assert stats["total_ips"] == 0
+        assert stats["max_connections"] == 0
 
 
 class TestRateLimiterEdgeCases:
@@ -332,9 +324,7 @@ class TestRateLimiterEdgeCases:
     async def test_very_high_limits(self):
         """Test rate limiter with very high limits."""
         limiter = RateLimiter(
-            max_connections_per_ip=10000,
-            max_messages_per_second=100000,
-            burst_size=10000
+            max_connections_per_ip=10000, max_messages_per_second=100000, burst_size=10000
         )
         ip = "192.0.2.1"
 
@@ -354,7 +344,7 @@ class TestRateLimiterEdgeCases:
         limiter = RateLimiter(max_messages_per_second=10, burst_size=5)
         ip = "192.0.2.1"
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             start_time = 1000.0
             mock_time.return_value = start_time
 
@@ -402,7 +392,7 @@ class TestRateLimiterEdgeCases:
         limiter = RateLimiter(max_messages_per_second=1.5, burst_size=5)  # 1.5 tokens per second
         ip = "192.0.2.1"
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             start_time = 1000.0
             mock_time.return_value = start_time
 
@@ -453,7 +443,7 @@ class TestRateLimiterEdgeCases:
 
         # Check that connection tracking is cleaned up
         stats = limiter.get_stats()
-        assert stats['total_ips'] == 0
+        assert stats["total_ips"] == 0
 
         # Message tokens should still exist (they don't auto-cleanup)
         assert len(limiter.message_tokens) > 0

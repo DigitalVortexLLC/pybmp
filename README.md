@@ -26,7 +26,27 @@ See [SECURITY.md](SECURITY.md) for complete security guidelines.
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Using Pre-built Docker Images (Fastest)
+
+Pull and run the latest image directly from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/digitalvortexllc/pybmp:latest
+
+# Run with external PostgreSQL
+docker run -d \
+  --name bmp-collector \
+  -p 11019:11019 \
+  -p 9090:9090 \
+  -e DB_HOST=your-postgres-host \
+  -e DB_PASSWORD=your-secure-password \
+  ghcr.io/digitalvortexllc/pybmp:latest
+```
+
+For detailed Docker usage, see [DOCKER.md](DOCKER.md).
+
+### Using Docker Compose (Recommended for Development)
 
 1. Clone the repository
 2. **IMPORTANT**: Set secure passwords:

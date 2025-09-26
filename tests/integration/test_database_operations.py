@@ -7,8 +7,10 @@ import asyncpg
 
 from src.database.connection import DatabasePool
 from tests.fixtures.database_fixtures import (
-    generate_mock_route_data, generate_mock_session_data,
-    generate_mock_stats_data, EDGE_CASE_DATA
+    generate_mock_route_data,
+    generate_mock_session_data,
+    generate_mock_stats_data,
+    EDGE_CASE_DATA,
 )
 
 
@@ -40,7 +42,7 @@ class TestDatabasePoolIntegration:
         """Test database connection lifecycle."""
         db_pool = DatabasePool(test_settings)
 
-        with patch('src.database.connection.asyncpg.create_pool') as mock_create:
+        with patch("src.database.connection.asyncpg.create_pool") as mock_create:
             mock_pool = AsyncMock()
             mock_create.return_value = mock_pool
 
@@ -108,7 +110,7 @@ class TestDatabasePoolIntegration:
         sessions = generate_mock_session_data(3)
 
         mock_connection = AsyncMock()
-        mock_connection.fetchrow.return_value = {'id': 123}
+        mock_connection.fetchrow.return_value = {"id": 123}
         real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
 
         # Create sessions
@@ -121,11 +123,14 @@ class TestDatabasePoolIntegration:
         assert all(sid == 123 for sid in session_ids)
 
         # Close a session
-        await real_db_pool.close_session('192.0.2.1', 123)
+        await real_db_pool.close_session("192.0.2.1", 123)
 
         # Verify session closure query
-        close_calls = [call for call in mock_connection.execute.call_args_list
-                      if "UPDATE router_sessions" in call[0][0]]
+        close_calls = [
+            call
+            for call in mock_connection.execute.call_args_list
+            if "UPDATE router_sessions" in call[0][0]
+        ]
         assert len(close_calls) == 1
 
     @pytest.mark.asyncio
@@ -158,7 +163,7 @@ class TestDatabasePoolIntegration:
         mock_connection.execute.side_effect = ["DELETE 100", "DELETE 50"]
         real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
 
-        with patch('src.database.connection.datetime') as mock_datetime:
+        with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -180,13 +185,13 @@ class TestDatabasePoolIntegration:
         """Test route summary query generation."""
         mock_connection = AsyncMock()
         mock_summary = {
-            'unique_prefixes': 10000,
-            'unique_routers': 5,
-            'unique_peers': 100,
-            'ipv4_routes': 9000,
-            'ipv6_routes': 1000,
-            'evpn_routes': 0,
-            'withdrawn_routes': 500
+            "unique_prefixes": 10000,
+            "unique_routers": 5,
+            "unique_peers": 100,
+            "ipv4_routes": 9000,
+            "ipv6_routes": 1000,
+            "evpn_routes": 0,
+            "withdrawn_routes": 500,
         }
         mock_connection.fetchrow.return_value = mock_summary
         real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
@@ -225,14 +230,14 @@ class TestDatabasePoolIntegration:
         # Mock return values
         for conn in mock_connections:
             conn.prepare.return_value = AsyncMock()
-            conn.fetchrow.return_value = {'id': 123}
+            conn.fetchrow.return_value = {"id": 123}
 
         # Run concurrent operations
         tasks = []
 
         # Route insertions
         for i in range(0, 20, 5):
-            batch = routes_batch[i:i+5]
+            batch = routes_batch[i : i + 5]
             task = asyncio.create_task(real_db_pool.batch_insert_routes(batch))
             tasks.append(task)
 
@@ -308,18 +313,18 @@ class TestDatabasePoolIntegration:
         real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
 
         # Test empty routes
-        await real_db_pool.batch_insert_routes(edge_cases['empty_routes'])
+        await real_db_pool.batch_insert_routes(edge_cases["empty_routes"])
         # Should not call database for empty list
         assert not mock_connection.prepare.called
 
         # Test single route
-        await real_db_pool.batch_insert_routes(edge_cases['single_route'])
+        await real_db_pool.batch_insert_routes(edge_cases["single_route"])
         mock_connection.prepare.assert_called_once()
 
         # Test large batch
         mock_connection.reset_mock()
         mock_connection.prepare.return_value = mock_prepared
-        await real_db_pool.batch_insert_routes(edge_cases['large_batch'])
+        await real_db_pool.batch_insert_routes(edge_cases["large_batch"])
         mock_connection.prepare.assert_called_once()
 
     @pytest.mark.asyncio
@@ -332,12 +337,12 @@ class TestDatabasePoolIntegration:
 
         # Test with potentially dangerous data
         dangerous_route = {
-            'prefix': "'; DROP TABLE routes; --",
-            'router_ip': "'; DELETE FROM routes; --",
-            'peer_ip': "'; UPDATE routes SET prefix = 'hacked'; --",
-            'peer_as': 65001,
-            'family': 'IPv4',
-            'time': datetime.utcnow()
+            "prefix": "'; DROP TABLE routes; --",
+            "router_ip": "'; DELETE FROM routes; --",
+            "peer_ip": "'; UPDATE routes SET prefix = 'hacked'; --",
+            "peer_as": 65001,
+            "family": "IPv4",
+            "time": datetime.utcnow(),
         }
 
         await real_db_pool.update_route_history(dangerous_route)
@@ -394,21 +399,21 @@ class TestDatabasePoolIntegration:
 
         # Create routes with fields in different orders
         route1 = {
-            'time': datetime.utcnow(),
-            'family': 'IPv4',
-            'prefix': '10.0.1.0/24',
-            'router_ip': '192.0.2.1',
-            'peer_ip': '10.0.0.1',
-            'peer_as': 65001
+            "time": datetime.utcnow(),
+            "family": "IPv4",
+            "prefix": "10.0.1.0/24",
+            "router_ip": "192.0.2.1",
+            "peer_ip": "10.0.0.1",
+            "peer_as": 65001,
         }
 
         route2 = {
-            'peer_as': 65002,
-            'router_ip': '192.0.2.2',
-            'time': datetime.utcnow(),
-            'prefix': '10.0.2.0/24',
-            'family': 'IPv4',
-            'peer_ip': '10.0.0.2'
+            "peer_as": 65002,
+            "router_ip": "192.0.2.2",
+            "time": datetime.utcnow(),
+            "prefix": "10.0.2.0/24",
+            "family": "IPv4",
+            "peer_ip": "10.0.0.2",
         }
 
         await real_db_pool.batch_insert_routes([route1, route2])

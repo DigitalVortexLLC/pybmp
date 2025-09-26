@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.bmp.processor import RouteProcessor
@@ -21,29 +21,31 @@ class TestRouteProcessor:
         assert processor.db_pool == mock_db_pool
         assert processor.route_buffer == []
         assert isinstance(processor.stats, dict)
-        assert processor.stats['messages_processed'] == 0
+        assert processor.stats["messages_processed"] == 0
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_process_route_monitoring_message(self, route_processor, sample_route_monitoring_message):
+    async def test_process_route_monitoring_message(
+        self, route_processor, sample_route_monitoring_message
+    ):
         """Test processing route monitoring message."""
         router_ip = "192.0.2.100"
 
         await route_processor.process_message(sample_route_monitoring_message, router_ip)
 
         # Check that message was processed
-        assert route_processor.stats['messages_processed'] == 1
-        assert route_processor.stats['routes_processed'] >= 2  # 2 NLRI prefixes
+        assert route_processor.stats["messages_processed"] == 1
+        assert route_processor.stats["routes_processed"] >= 2  # 2 NLRI prefixes
 
         # Check that routes were buffered
         assert len(route_processor.route_buffer) >= 2
 
         # Verify route data structure
         route = route_processor.route_buffer[0]
-        assert route['router_ip'] == router_ip
-        assert route['peer_ip'] == '192.0.2.1'
-        assert route['peer_as'] == 65001
-        assert route['prefix'] in ['10.0.1.0/24', '10.0.2.0/24']
+        assert route["router_ip"] == router_ip
+        assert route["peer_ip"] == "192.0.2.1"
+        assert route["peer_as"] == 65001
+        assert route["prefix"] in ["10.0.1.0/24", "10.0.2.0/24"]
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -54,13 +56,13 @@ class TestRouteProcessor:
         await route_processor.process_message(sample_peer_up_message, router_ip)
 
         # Check that message was processed
-        assert route_processor.stats['messages_processed'] == 1
+        assert route_processor.stats["messages_processed"] == 1
 
         # Verify database call was made
         route_processor.db_pool.create_or_update_session.assert_called_once()
         call_args = route_processor.db_pool.create_or_update_session.call_args[0][0]
-        assert call_args['router_ip'] == router_ip
-        assert call_args['status'] == 'active'
+        assert call_args["router_ip"] == router_ip
+        assert call_args["status"] == "active"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -71,12 +73,12 @@ class TestRouteProcessor:
         await route_processor.process_message(sample_peer_down_message, router_ip)
 
         # Check that message was processed
-        assert route_processor.stats['messages_processed'] == 1
+        assert route_processor.stats["messages_processed"] == 1
 
         # Check that withdrawal route was added
         assert len(route_processor.route_buffer) == 1
         route = route_processor.route_buffer[0]
-        assert route['is_withdrawn'] is True
+        assert route["is_withdrawn"] is True
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -87,7 +89,7 @@ class TestRouteProcessor:
         await route_processor.process_message(sample_stats_message, router_ip)
 
         # Check that message was processed
-        assert route_processor.stats['messages_processed'] == 1
+        assert route_processor.stats["messages_processed"] == 1
 
         # Verify database call was made
         route_processor.db_pool.update_statistics.assert_called_once()
@@ -101,7 +103,7 @@ class TestRouteProcessor:
         await route_processor.process_message(sample_initiation_message, router_ip)
 
         # Check that message was processed
-        assert route_processor.stats['messages_processed'] == 1
+        assert route_processor.stats["messages_processed"] == 1
 
         # Verify session creation was called
         route_processor.db_pool.create_or_update_session.assert_called_once()
@@ -114,13 +116,13 @@ class TestRouteProcessor:
 
         # Mock active sessions
         route_processor.db_pool.get_active_sessions.return_value = [
-            {'router_ip': router_ip, 'id': 123}
+            {"router_ip": router_ip, "id": 123}
         ]
 
         await route_processor.process_message(sample_termination_message, router_ip)
 
         # Check that message was processed
-        assert route_processor.stats['messages_processed'] == 1
+        assert route_processor.stats["messages_processed"] == 1
 
         # Verify session closure was called
         route_processor.db_pool.close_session.assert_called_once_with(router_ip, 123)
@@ -134,16 +136,18 @@ class TestRouteProcessor:
         peer_as = 65001
         prefix = "10.0.1.0/24"
 
-        route = route_processor._create_base_route(router_ip, peer_ip, peer_as, prefix, sample_timestamp)
+        route = route_processor._create_base_route(
+            router_ip, peer_ip, peer_as, prefix, sample_timestamp
+        )
 
-        assert route['router_ip'] == router_ip
-        assert route['peer_ip'] == peer_ip
-        assert route['peer_as'] == peer_as
-        assert route['prefix'] == prefix
-        assert route['prefix_len'] == 24
-        assert route['time'] == sample_timestamp
-        assert route['is_withdrawn'] is False
-        assert route['family'] == 'IPv4'
+        assert route["router_ip"] == router_ip
+        assert route["peer_ip"] == peer_ip
+        assert route["peer_as"] == peer_as
+        assert route["prefix"] == prefix
+        assert route["prefix_len"] == 24
+        assert route["time"] == sample_timestamp
+        assert route["is_withdrawn"] is False
+        assert route["family"] == "IPv4"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -154,24 +158,24 @@ class TestRouteProcessor:
         peer_as = 65001
         prefix = "10.0.1.0/24"
         attributes = {
-            'next_hop': '192.0.2.2',
-            'origin': 0,
-            'as_path': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001, 65002]}],
-            'communities': ['65001:100'],
-            'med': 50,
-            'local_pref': 100
+            "next_hop": "192.0.2.2",
+            "origin": 0,
+            "as_path": [{"type": "AS_SEQUENCE", "as_numbers": [65001, 65002]}],
+            "communities": ["65001:100"],
+            "med": 50,
+            "local_pref": 100,
         }
 
         route = route_processor._create_route_from_nlri(
             router_ip, peer_ip, peer_as, prefix, attributes, sample_timestamp, AFI.IPV4
         )
 
-        assert route['next_hop'] == '192.0.2.2'
-        assert route['origin'] == 0
-        assert route['med'] == 50
-        assert route['local_pref'] == 100
-        assert json.loads(route['as_path']) == attributes['as_path']
-        assert json.loads(route['communities']) == attributes['communities']
+        assert route["next_hop"] == "192.0.2.2"
+        assert route["origin"] == 0
+        assert route["med"] == 50
+        assert route["local_pref"] == 100
+        assert json.loads(route["as_path"]) == attributes["as_path"]
+        assert json.loads(route["communities"]) == attributes["communities"]
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -181,68 +185,62 @@ class TestRouteProcessor:
         peer_ip = "192.0.2.1"
         peer_as = 65001
         evpn_data = {
-            'type': 2,
-            'name': 'MAC/IP Advertisement',
-            'rd': '65001:100',
-            'esi': '01234567890123456789',
-            'eth_tag': 100,
-            'mac': '00:11:22:33:44:55'
+            "type": 2,
+            "name": "MAC/IP Advertisement",
+            "rd": "65001:100",
+            "esi": "01234567890123456789",
+            "eth_tag": 100,
+            "mac": "00:11:22:33:44:55",
         }
-        attributes = {
-            'origin': 0,
-            'as_path': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001]}]
-        }
+        attributes = {"origin": 0, "as_path": [{"type": "AS_SEQUENCE", "as_numbers": [65001]}]}
 
         route = route_processor._create_evpn_route(
             router_ip, peer_ip, peer_as, evpn_data, attributes, sample_timestamp
         )
 
-        assert route['family'] == 'EVPN'
-        assert route['afi'] == AFI.L2VPN
-        assert route['safi'] == SAFI.EVPN
-        assert route['route_type'] == 'MAC/IP Advertisement'
-        assert route['route_distinguisher'] == '65001:100'
-        assert route['mac_address'] == '00:11:22:33:44:55'
+        assert route["family"] == "EVPN"
+        assert route["afi"] == AFI.L2VPN
+        assert route["safi"] == SAFI.EVPN
+        assert route["route_type"] == "MAC/IP Advertisement"
+        assert route["route_distinguisher"] == "65001:100"
+        assert route["mac_address"] == "00:11:22:33:44:55"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_parse_attributes(self, route_processor):
         """Test parsing BGP attributes."""
         attributes = [
-            {'type': 1, 'value': 0},  # ORIGIN
-            {'type': 2, 'value': [{'type': 'AS_SEQUENCE', 'as_numbers': [65001]}]},  # AS_PATH
-            {'type': 3, 'value': '192.0.2.1'},  # NEXT_HOP
-            {'type': 4, 'value': 50},  # MED
-            {'type': 5, 'value': 100},  # LOCAL_PREF
-            {'type': 8, 'value': ['65001:100']},  # COMMUNITIES
+            {"type": 1, "value": 0},  # ORIGIN
+            {"type": 2, "value": [{"type": "AS_SEQUENCE", "as_numbers": [65001]}]},  # AS_PATH
+            {"type": 3, "value": "192.0.2.1"},  # NEXT_HOP
+            {"type": 4, "value": 50},  # MED
+            {"type": 5, "value": 100},  # LOCAL_PREF
+            {"type": 8, "value": ["65001:100"]},  # COMMUNITIES
         ]
 
         parsed = route_processor._parse_attributes(attributes)
 
-        assert parsed['origin'] == 0
-        assert parsed['as_path'] == [{'type': 'AS_SEQUENCE', 'as_numbers': [65001]}]
-        assert parsed['next_hop'] == '192.0.2.1'
-        assert parsed['med'] == 50
-        assert parsed['local_pref'] == 100
-        assert parsed['communities'] == ['65001:100']
+        assert parsed["origin"] == 0
+        assert parsed["as_path"] == [{"type": "AS_SEQUENCE", "as_numbers": [65001]}]
+        assert parsed["next_hop"] == "192.0.2.1"
+        assert parsed["med"] == 50
+        assert parsed["local_pref"] == 100
+        assert parsed["communities"] == ["65001:100"]
 
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_get_family(self, route_processor):
         """Test address family determination."""
-        assert route_processor._get_family(AFI.IPV4, SAFI.UNICAST) == 'IPv4'
-        assert route_processor._get_family(AFI.IPV6, SAFI.UNICAST) == 'IPv6'
-        assert route_processor._get_family(AFI.L2VPN, SAFI.EVPN) == 'EVPN'
-        assert route_processor._get_family(AFI.IPV4, SAFI.EVPN) == 'EVPN'
+        assert route_processor._get_family(AFI.IPV4, SAFI.UNICAST) == "IPv4"
+        assert route_processor._get_family(AFI.IPV6, SAFI.UNICAST) == "IPv6"
+        assert route_processor._get_family(AFI.L2VPN, SAFI.EVPN) == "EVPN"
+        assert route_processor._get_family(AFI.IPV4, SAFI.EVPN) == "EVPN"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_get_timestamp(self, route_processor):
         """Test timestamp extraction from peer info."""
-        peer_info = {
-            'timestamp_sec': 1704110400,
-            'timestamp_usec': 500000
-        }
+        peer_info = {"timestamp_sec": 1704110400, "timestamp_usec": 500000}
 
         timestamp = route_processor._get_timestamp(peer_info)
 
@@ -255,7 +253,7 @@ class TestRouteProcessor:
         """Test timestamp when peer info has no timestamp."""
         peer_info = {}
 
-        with patch('src.bmp.processor.datetime') as mock_datetime:
+        with patch("src.bmp.processor.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -301,7 +299,7 @@ class TestRouteProcessor:
         # Mock database error
         route_processor.db_pool.batch_insert_routes.side_effect = Exception("Database error")
 
-        with patch('src.bmp.processor.logger') as mock_logger:
+        with patch("src.bmp.processor.logger") as mock_logger:
             await route_processor.flush_routes()
 
             # Error should be logged
@@ -318,20 +316,20 @@ class TestRouteProcessor:
 
         # Create message that will generate routes
         message = {
-            'type': 'route_monitoring',
-            'peer': {
-                'peer_ip': '192.0.2.1',
-                'peer_as': 65001,
-                'timestamp_sec': 1704110400,
-                'timestamp_usec': 0
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
             },
-            'bgp_message': {
-                'type': 'UPDATE',
-                'nlri': [f'10.0.{i}.0/24' for i in range(101)]  # 101 routes > 100 buffer limit
-            }
+            "bgp_message": {
+                "type": "UPDATE",
+                "nlri": [f"10.0.{i}.0/24" for i in range(101)],  # 101 routes > 100 buffer limit
+            },
         }
 
-        with patch.object(route_processor, 'flush_routes') as mock_flush:
+        with patch.object(route_processor, "flush_routes") as mock_flush:
             await route_processor.process_message(message, router_ip)
 
             # Flush should have been called automatically
@@ -348,10 +346,10 @@ class TestRouteProcessor:
         routes = []
 
         mp_reach = {
-            'afi': AFI.IPV6,
-            'safi': SAFI.UNICAST,
-            'next_hop': '2001:db8::1',
-            'nlri': ['2001:db8:1::/64', '2001:db8:2::/64']
+            "afi": AFI.IPV6,
+            "safi": SAFI.UNICAST,
+            "next_hop": "2001:db8::1",
+            "nlri": ["2001:db8:1::/64", "2001:db8:2::/64"],
         }
 
         await route_processor._process_mp_reach(
@@ -359,9 +357,9 @@ class TestRouteProcessor:
         )
 
         assert len(routes) == 2
-        assert routes[0]['family'] == 'IPv6'
-        assert routes[0]['next_hop'] == '2001:db8::1'
-        assert route_processor.stats['routes_processed'] == 2
+        assert routes[0]["family"] == "IPv6"
+        assert routes[0]["next_hop"] == "2001:db8::1"
+        assert route_processor.stats["routes_processed"] == 2
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -374,12 +372,10 @@ class TestRouteProcessor:
         routes = []
 
         mp_reach = {
-            'afi': AFI.L2VPN,
-            'safi': SAFI.EVPN,
-            'next_hop': '192.0.2.2',
-            'nlri': [
-                {'type': 2, 'name': 'MAC/IP Advertisement', 'mac': '00:11:22:33:44:55'}
-            ]
+            "afi": AFI.L2VPN,
+            "safi": SAFI.EVPN,
+            "next_hop": "192.0.2.2",
+            "nlri": [{"type": 2, "name": "MAC/IP Advertisement", "mac": "00:11:22:33:44:55"}],
         }
 
         await route_processor._process_mp_reach(
@@ -387,8 +383,50 @@ class TestRouteProcessor:
         )
 
         assert len(routes) == 1
-        assert routes[0]['family'] == 'EVPN'
-        assert routes[0]['next_hop'] == '192.0.2.2'
+        assert routes[0]["family"] == "EVPN"
+        assert routes[0]["next_hop"] == "192.0.2.2"
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_process_mp_reach_evpn_type_4(self, route_processor):
+        """Test processing MP_REACH_NLRI for EVPN Route Type 4 (Ethernet Segment)."""
+        router_ip = "192.0.2.100"
+        peer_ip = "192.0.2.1"
+        peer_as = 65001
+        timestamp = datetime.now(timezone.utc)
+        attributes = {"origin": 0, "as_path": [{"type": "AS_SEQUENCE", "as_numbers": [65001]}]}
+
+        # EVPN Route Type 4 data
+        mp_reach = {
+            "afi": AFI.L2VPN,
+            "safi": SAFI.EVPN,
+            "next_hop": "192.0.2.2",
+            "nlri": [
+                {
+                    "type": 4,
+                    "name": "Ethernet Segment",
+                    "rd": "65001:100",
+                    "esi": "0123456789abcdef0102",
+                    "originating_ip": "192.0.2.1",
+                    "ip_length": 32,
+                }
+            ],
+        }
+
+        routes = []
+        await route_processor._process_mp_reach(
+            mp_reach, router_ip, peer_ip, peer_as, attributes, timestamp, routes
+        )
+
+        assert len(routes) == 1
+        route = routes[0]
+        assert route["family"] == "EVPN"
+        assert route["next_hop"] == "192.0.2.2"
+        assert route["route_type"] == "Ethernet Segment"
+        assert route["route_distinguisher"] == "65001:100"
+        assert route["esi"] == "0123456789abcdef0102"
+        # Check prefix format for Type 4
+        assert route["prefix"] == "evpn:4"
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -401,9 +439,9 @@ class TestRouteProcessor:
         routes = []
 
         mp_unreach = {
-            'afi': AFI.IPV4,
-            'safi': SAFI.UNICAST,
-            'withdrawn': ['10.0.1.0/24', '10.0.2.0/24']
+            "afi": AFI.IPV4,
+            "safi": SAFI.UNICAST,
+            "withdrawn": ["10.0.1.0/24", "10.0.2.0/24"],
         }
 
         await route_processor._process_mp_unreach(
@@ -411,8 +449,8 @@ class TestRouteProcessor:
         )
 
         assert len(routes) == 2
-        assert all(route['is_withdrawn'] for route in routes)
-        assert route_processor.stats['withdrawals_processed'] == 2
+        assert all(route["is_withdrawn"] for route in routes)
+        assert route_processor.stats["withdrawals_processed"] == 2
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -421,15 +459,13 @@ class TestRouteProcessor:
         router_ip = "192.0.2.100"
 
         # Create invalid message that should trigger error
-        invalid_message = {
-            'type': 'invalid_type'
-        }
+        invalid_message = {"type": "invalid_type"}
 
-        with patch('src.bmp.processor.logger') as mock_logger:
+        with patch("src.bmp.processor.logger") as mock_logger:
             await route_processor.process_message(invalid_message, router_ip)
 
             # Error should be counted
-            assert route_processor.stats['errors'] == 1
+            assert route_processor.stats["errors"] == 1
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -440,35 +476,35 @@ class TestRouteProcessor:
         peer_as = 65001
 
         # Test with invalid prefix
-        with patch('src.bmp.processor.logger') as mock_logger:
+        with patch("src.bmp.processor.logger") as mock_logger:
             route = route_processor._create_base_route(
                 router_ip, peer_ip, peer_as, "invalid-prefix", sample_timestamp
             )
 
             # Should log warning and set prefix_len to 0
             mock_logger.warning.assert_called()
-            assert route['prefix_len'] == 0
+            assert route["prefix_len"] == 0
 
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_get_stats(self, route_processor):
         """Test getting processing statistics."""
         # Simulate some processing
-        route_processor.stats['messages_processed'] = 100
-        route_processor.stats['routes_processed'] = 500
-        route_processor.stats['withdrawals_processed'] = 50
-        route_processor.stats['errors'] = 5
+        route_processor.stats["messages_processed"] = 100
+        route_processor.stats["routes_processed"] = 500
+        route_processor.stats["withdrawals_processed"] = 50
+        route_processor.stats["errors"] = 5
 
         stats = route_processor.get_stats()
 
-        assert stats['messages_processed'] == 100
-        assert stats['routes_processed'] == 500
-        assert stats['withdrawals_processed'] == 50
-        assert stats['errors'] == 5
+        assert stats["messages_processed"] == 100
+        assert stats["routes_processed"] == 500
+        assert stats["withdrawals_processed"] == 50
+        assert stats["errors"] == 5
 
         # Ensure it's a copy, not the original
-        stats['messages_processed'] = 999
-        assert route_processor.stats['messages_processed'] == 100
+        stats["messages_processed"] = 999
+        assert route_processor.stats["messages_processed"] == 100
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -478,28 +514,23 @@ class TestRouteProcessor:
 
         # Create multiple concurrent message processing tasks
         message = {
-            'type': 'route_monitoring',
-            'peer': {
-                'peer_ip': '192.0.2.1',
-                'peer_as': 65001,
-                'timestamp_sec': 1704110400,
-                'timestamp_usec': 0
+            "type": "route_monitoring",
+            "peer": {
+                "peer_ip": "192.0.2.1",
+                "peer_as": 65001,
+                "timestamp_sec": 1704110400,
+                "timestamp_usec": 0,
             },
-            'bgp_message': {
-                'type': 'UPDATE',
-                'nlri': ['10.0.1.0/24']
-            }
+            "bgp_message": {"type": "UPDATE", "nlri": ["10.0.1.0/24"]},
         }
 
         tasks = []
         for i in range(10):
-            task = asyncio.create_task(
-                route_processor.process_message(message, router_ip)
-            )
+            task = asyncio.create_task(route_processor.process_message(message, router_ip))
             tasks.append(task)
 
         await asyncio.gather(*tasks)
 
         # All messages should be processed without race conditions
-        assert route_processor.stats['messages_processed'] == 10
+        assert route_processor.stats["messages_processed"] == 10
         assert len(route_processor.route_buffer) == 10
