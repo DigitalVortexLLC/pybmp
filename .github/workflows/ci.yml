@@ -66,7 +66,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload bandit report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-security-report
@@ -132,7 +132,7 @@ jobs:
         name: codecov-unit-${{ matrix.python-version }}
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results-${{ matrix.python-version }}
@@ -221,7 +221,7 @@ jobs:
         name: codecov-integration
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
@@ -278,7 +278,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload security test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-test-results
@@ -332,7 +332,7 @@ jobs:
         DB_PASSWORD: test_password
 
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-results
@@ -402,7 +402,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload dependency check results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: dependency-check-results

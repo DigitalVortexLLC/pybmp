@@ -67,7 +67,7 @@ jobs:
         DB_PASSWORD: test_password
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
@@ -136,7 +136,7 @@ jobs:
         DB_PASSWORD: test_password
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: dependency-test-results-${{ matrix.dependency-set }}
@@ -180,7 +180,7 @@ jobs:
         DB_PASSWORD: test_password
 
     - name: Upload stress test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: stress-test-results
@@ -224,7 +224,7 @@ jobs:
         DB_PASSWORD: test_password
 
     - name: Upload memory profiling results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: memory-test-results
@@ -241,7 +241,7 @@ jobs:
 
     steps:
     - name: Download all test artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
 
     - name: Generate combined test report
       run: |
@@ -262,7 +262,7 @@ jobs:
         echo "- Memory usage patterns" >> test-report.md
 
     - name: Upload combined test report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: combined-test-report
         path: test-report.md

@@ -101,7 +101,7 @@ jobs:
         fi
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
@@ -216,7 +216,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload Docker security scan results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: docker-security-reports
