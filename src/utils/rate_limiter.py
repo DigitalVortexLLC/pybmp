@@ -45,6 +45,9 @@ class RateLimiter:
 
     async def check_message_allowed(self, ip: str, count: int = 1) -> bool:
         """Check if messages from this IP are allowed (token bucket algorithm)."""
+        if not isinstance(count, int) or count < 0:
+            raise TypeError("Count must be a non-negative integer")
+
         async with self._lock:
             now = time.time()
 

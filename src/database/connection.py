@@ -268,8 +268,13 @@ class DatabasePool:
                 result = await conn.execute(query, param)
                 # Extract number from result like "DELETE 123"
                 if result:
-                    count = int(result.split()[1]) if len(result.split()) > 1 else 0
-                    total_deleted += count
+                    try:
+                        count = int(result.split()[1]) if len(result.split()) > 1 else 0
+                        total_deleted += count
+                    except (ValueError, IndexError):
+                        # Handle unparseable results
+                        logger.warning(f"Could not parse delete result: {result}")
+                        continue
 
         logger.info(f"Cleaned up {total_deleted} old records")
         return total_deleted

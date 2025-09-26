@@ -1,43 +1,43 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field, field_validator, ConfigDict
-from typing import Optional
+from typing import Optional, Annotated
 import os
 
 
 class Settings(BaseSettings):
     # Database settings
-    db_host: str = Field(default="localhost", env="DB_HOST")
-    db_port: int = Field(default=5432, env="DB_PORT")
-    db_name: str = Field(default="bmp_collector", env="DB_NAME")
-    db_user: str = Field(default="bmp_user", env="DB_USER")
-    db_password: str = Field(default="", env="DB_PASSWORD")
-    db_pool_size: int = Field(default=20, env="DB_POOL_SIZE")
-    db_max_overflow: int = Field(default=40, env="DB_MAX_OVERFLOW")
+    db_host: str = Field(default="localhost")
+    db_port: int = Field(default=5432)
+    db_name: str = Field(default="bmp_collector")
+    db_user: str = Field(default="bmp_user")
+    db_password: str
+    db_pool_size: int = Field(default=20)
+    db_max_overflow: int = Field(default=40)
 
     # BMP Server settings
-    bmp_listen_host: str = Field(default="0.0.0.0", env="BMP_LISTEN_HOST")
-    bmp_listen_port: int = Field(default=11019, env="BMP_LISTEN_PORT")
-    bmp_buffer_size: int = Field(default=65536, env="BMP_BUFFER_SIZE")
-    bmp_max_connections: int = Field(default=100, env="BMP_MAX_CONNECTIONS")
+    bmp_listen_host: str = Field(default="0.0.0.0")
+    bmp_listen_port: int = Field(default=11019)
+    bmp_buffer_size: int = Field(default=65536)
+    bmp_max_connections: int = Field(default=100)
 
     # Data retention settings
-    data_retention_days: int = Field(default=90, env="DATA_RETENTION_DAYS")
-    cleanup_interval_hours: int = Field(default=24, env="CLEANUP_INTERVAL_HOURS")
+    data_retention_days: int = Field(default=90)
+    cleanup_interval_hours: int = Field(default=24)
 
     # Logging settings
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    log_level: str = Field(default="INFO")
     log_format: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s", env="LOG_FORMAT"
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Metrics settings
-    metrics_enabled: bool = Field(default=True, env="METRICS_ENABLED")
-    metrics_port: int = Field(default=9090, env="METRICS_PORT")
+    metrics_enabled: bool = Field(default=True)
+    metrics_port: int = Field(default=9090)
 
     # Processing settings
-    batch_size: int = Field(default=1000, env="BATCH_SIZE")
-    batch_timeout_seconds: int = Field(default=5, env="BATCH_TIMEOUT_SECONDS")
-    worker_threads: int = Field(default=4, env="WORKER_THREADS")
+    batch_size: int = Field(default=1000)
+    batch_timeout_seconds: int = Field(default=5)
+    worker_threads: int = Field(default=4)
 
     model_config = ConfigDict(
         env_file=".env",

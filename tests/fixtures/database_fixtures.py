@@ -1,5 +1,5 @@
 """Database test fixtures and mock data."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List, Dict, Any
 import random
 
@@ -7,7 +7,7 @@ import random
 def generate_mock_route_data(count: int = 100) -> List[Dict[str, Any]]:
     """Generate mock route data for database testing."""
     routes = []
-    base_time = datetime.utcnow()
+    base_time = datetime.now(UTC)
 
     for i in range(count):
         route = {
@@ -53,7 +53,7 @@ def generate_mock_route_data(count: int = 100) -> List[Dict[str, Any]]:
 def generate_mock_evpn_routes(count: int = 50) -> List[Dict[str, Any]]:
     """Generate mock EVPN route data."""
     routes = []
-    base_time = datetime.utcnow()
+    base_time = datetime.now(UTC)
 
     for i in range(count):
         route = {
@@ -99,7 +99,7 @@ def generate_mock_evpn_routes(count: int = 50) -> List[Dict[str, Any]]:
 def generate_mock_session_data(count: int = 10) -> List[Dict[str, Any]]:
     """Generate mock router session data."""
     sessions = []
-    base_time = datetime.utcnow()
+    base_time = datetime.now(UTC)
 
     for i in range(count):
         session = {
@@ -124,7 +124,7 @@ def generate_mock_session_data(count: int = 10) -> List[Dict[str, Any]]:
 def generate_mock_stats_data(count: int = 100) -> List[Dict[str, Any]]:
     """Generate mock BMP statistics data."""
     stats = []
-    base_time = datetime.utcnow()
+    base_time = datetime.now(UTC)
 
     for i in range(count):
         stat = {
@@ -148,7 +148,7 @@ def generate_mock_stats_data(count: int = 100) -> List[Dict[str, Any]]:
 def generate_mock_route_history(count: int = 50) -> List[Dict[str, Any]]:
     """Generate mock route history data."""
     history = []
-    base_time = datetime.utcnow()
+    base_time = datetime.now(UTC)
 
     for i in range(count):
         record = {
@@ -190,7 +190,7 @@ MOCK_DB_RESPONSES = {
             "id": 1,
             "router_ip": "192.0.2.1",
             "router_name": "core-router-1",
-            "session_start": datetime.utcnow() - timedelta(hours=24),
+            "session_start": datetime.now(UTC) - timedelta(hours=24),
             "local_port": 11019,
             "peer_as": 65001,
             "peer_bgp_id": "192.0.2.1",
@@ -200,7 +200,7 @@ MOCK_DB_RESPONSES = {
             "id": 2,
             "router_ip": "192.0.2.2",
             "router_name": "edge-router-1",
-            "session_start": datetime.utcnow() - timedelta(hours=12),
+            "session_start": datetime.now(UTC) - timedelta(hours=12),
             "local_port": 11019,
             "peer_as": 65002,
             "peer_bgp_id": "192.0.2.2",
@@ -219,7 +219,7 @@ EDGE_CASE_DATA = {
     "large_batch": generate_mock_route_data(1000),
     "invalid_ip_routes": [
         {
-            "time": datetime.utcnow(),
+            "time": datetime.now(UTC),
             "router_ip": "invalid-ip",
             "peer_ip": "999.999.999.999",
             "prefix": "invalid-prefix",
@@ -240,7 +240,7 @@ EDGE_CASE_DATA = {
     ],
     "extreme_values": [
         {
-            "time": datetime.utcnow(),
+            "time": datetime.now(UTC),
             "router_ip": "192.0.2.1",
             "peer_ip": "10.0.0.1",
             "prefix": "0.0.0.0/0",

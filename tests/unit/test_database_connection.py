@@ -33,7 +33,9 @@ class TestDatabasePool:
 
         with patch("src.database.connection.asyncpg.create_pool") as mock_create_pool:
             mock_pool = AsyncMock()
-            mock_create_pool.return_value = mock_pool
+            async def async_return():
+                return mock_pool
+            mock_create_pool.return_value = async_return()
 
             await db_pool.connect()
 
@@ -96,7 +98,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         async with db_pool.acquire() as conn:
@@ -115,7 +117,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         result = await db_pool.execute("UPDATE table SET col = $1", "value")
@@ -137,7 +139,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         result = await db_pool.fetch("SELECT * FROM table WHERE id = $1", 1)
@@ -159,7 +161,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         result = await db_pool.fetchrow("SELECT * FROM table WHERE id = $1", 1)
@@ -179,7 +181,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         route_data = generate_mock_route_data(1)[0]
@@ -204,7 +206,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         routes = generate_mock_route_data(5)
@@ -239,7 +241,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         route_data = {
@@ -253,7 +255,7 @@ class TestDatabasePool:
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             await db_pool.update_route_history(route_data)
 
@@ -275,13 +277,13 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         session_data = {
             "router_ip": "192.0.2.1",
             "router_name": "test-router",
-            "session_start": datetime.utcnow(),
+            "session_start": datetime.now(),
             "status": "active",
         }
 
@@ -304,7 +306,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         await db_pool.close_session("192.0.2.1", 123)
@@ -327,7 +329,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         stats_data = {
@@ -340,7 +342,7 @@ class TestDatabasePool:
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             await db_pool.update_statistics(stats_data)
 
@@ -362,12 +364,12 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             result = await db_pool.cleanup_old_data(30)
 
@@ -387,12 +389,12 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             result = await db_pool.cleanup_old_data(30)
 
@@ -412,7 +414,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         result = await db_pool.get_active_sessions()
@@ -437,7 +439,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         result = await db_pool.get_route_summary()
@@ -460,7 +462,7 @@ class TestDatabasePool:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         result = await db_pool.get_route_summary()
@@ -485,13 +487,13 @@ class TestDatabasePoolEdgeCases:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         # Create routes with missing fields
         routes = [
             {
-                "time": datetime.utcnow(),
+                "time": datetime.now(),
                 "router_ip": "192.0.2.1",
                 "peer_ip": "10.0.0.1",
                 "prefix": "10.0.1.0/24",
@@ -520,7 +522,7 @@ class TestDatabasePoolEdgeCases:
         async def mock_acquire():
             yield AsyncMock()
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         # Test that exceptions are properly propagated
@@ -545,7 +547,7 @@ class TestDatabasePoolEdgeCases:
             connection_index += 1
             yield conn
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         # Run concurrent operations
@@ -571,7 +573,7 @@ class TestDatabasePoolEdgeCases:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         route_data = {
@@ -585,7 +587,7 @@ class TestDatabasePoolEdgeCases:
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             await db_pool.update_route_history(route_data)
 
@@ -605,7 +607,7 @@ class TestDatabasePoolEdgeCases:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         stats_data = {
@@ -616,7 +618,7 @@ class TestDatabasePoolEdgeCases:
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             await db_pool.update_statistics(stats_data)
 
@@ -637,12 +639,12 @@ class TestDatabasePoolEdgeCases:
         async def mock_acquire():
             yield mock_connection
 
-        mock_pool.acquire.return_value = mock_acquire()
+        mock_pool.acquire = mock_acquire
         db_pool.pool = mock_pool
 
         session_data = {
             "router_ip": "192.0.2.1",
-            "session_start": datetime.utcnow()
+            "session_start": datetime.now()
             # Missing optional fields
         }
 

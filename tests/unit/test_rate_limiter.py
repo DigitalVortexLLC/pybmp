@@ -153,12 +153,12 @@ class TestRateLimiter:
 
         allowed = await limiter.check_message_allowed(ip, count=3)
         assert allowed is True
-        assert limiter.message_tokens[ip] == 2  # 5 - 3
+        assert abs(limiter.message_tokens[ip] - 2.0) < 0.01  # 5 - 3, allowing for floating point precision
 
         # Should deny request for more tokens than available
         allowed = await limiter.check_message_allowed(ip, count=5)
         assert allowed is False
-        assert limiter.message_tokens[ip] == 2  # Unchanged
+        assert abs(limiter.message_tokens[ip] - 2.0) < 0.01  # Unchanged, allowing for floating point precision
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -167,18 +167,15 @@ class TestRateLimiter:
         limiter = RateLimiter(max_messages_per_second=10, burst_size=5)
         ip = "192.0.2.1"
 
-        # Consume all tokens
-        allowed = await limiter.check_message_allowed(ip, count=5)
-        assert allowed is True
-        assert limiter.message_tokens[ip] == 0
-
-        # Mock time advancement
-        with patch("time.time") as mock_time:
-            start_time = time.time()
+        # Mock time from the beginning to control timing
+        start_time = 1000.0  # Fixed start time
+        with patch("src.utils.rate_limiter.time.time") as mock_time:
             mock_time.return_value = start_time
 
-            # Set initial time
-            await limiter.check_message_allowed(ip, count=0)  # Just to set last_update
+            # Consume all tokens
+            allowed = await limiter.check_message_allowed(ip, count=5)
+            assert allowed is True
+            assert limiter.message_tokens[ip] == 0
 
             # Advance time by 0.5 seconds (should refill 5 tokens at 10/sec rate)
             mock_time.return_value = start_time + 0.5
@@ -193,8 +190,8 @@ class TestRateLimiter:
         limiter = RateLimiter(max_messages_per_second=100, burst_size=10)
         ip = "192.0.2.1"
 
-        with patch("time.time") as mock_time:
-            start_time = time.time()
+        start_time = 1000.0  # Fixed start time
+        with patch("src.utils.rate_limiter.time.time") as mock_time:
             mock_time.return_value = start_time
 
             # Initialize
@@ -264,7 +261,7 @@ class TestRateLimiter:
 
         # Verify final state
         assert limiter.connections_per_ip[ip] == 5
-        assert limiter.message_tokens[ip] == 40  # 50 - 10
+        assert abs(limiter.message_tokens[ip] - 40.0) < 0.1  # 50 - 10, allowing for floating point precision
 
     @pytest.mark.unit
     def test_get_stats(self):

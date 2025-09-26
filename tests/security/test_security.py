@@ -2,7 +2,7 @@
 import pytest
 import struct
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from datetime import datetime
 
 from src.bmp.server import BMPSession, BMPServer
@@ -91,7 +91,8 @@ class TestBufferOverflowProtection:
     def test_parser_invalid_peer_header_protection(self, bmp_parser):
         """Test parser protection against invalid peer headers."""
         # Create message with insufficient peer header data
-        insufficient_data = b"\x03\x00\x00\x00\x30\x00" + b"X" * 20  # Less than 42 bytes needed
+        # BMP header (6 bytes) + insufficient peer header data (20 bytes) = 26 bytes total
+        insufficient_data = b"\x03\x00\x00\x00\x1a\x00" + b"X" * 20  # Less than 42 bytes needed for peer header
 
         with patch("src.bmp.parser.logger") as mock_logger:
             result = bmp_parser.parse_message(insufficient_data)
@@ -125,19 +126,15 @@ class TestSQLInjectionPrevention:
         mock_connection = AsyncMock()
 
         # Mock the acquire context manager
-        @asyncio.coroutine
-        def mock_acquire():
-            class MockContext:
-                async def __aenter__(self):
-                    return mock_connection
+        class MockAsyncContextManager:
+            async def __aenter__(self):
+                return mock_connection
 
-                async def __aexit__(self, *args):
-                    pass
-
-            return MockContext()
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         db_pool.pool = AsyncMock()
-        db_pool.pool.acquire.return_value = mock_acquire()
+        db_pool.pool.acquire = Mock(return_value=MockAsyncContextManager())
 
         # Test with malicious SQL injection payloads
         malicious_route = {
@@ -176,19 +173,15 @@ class TestSQLInjectionPrevention:
         mock_connection = AsyncMock()
         mock_connection.fetchrow.return_value = {"id": 123}
 
-        @asyncio.coroutine
-        def mock_acquire():
-            class MockContext:
-                async def __aenter__(self):
-                    return mock_connection
+        class MockAsyncContextManager:
+            async def __aenter__(self):
+                return mock_connection
 
-                async def __aexit__(self, *args):
-                    pass
-
-            return MockContext()
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         db_pool.pool = AsyncMock()
-        db_pool.pool.acquire.return_value = mock_acquire()
+        db_pool.pool.acquire = Mock(return_value=MockAsyncContextManager())
 
         # Malicious session data
         malicious_session = {
@@ -216,19 +209,15 @@ class TestSQLInjectionPrevention:
         db_pool = DatabasePool(test_settings)
         mock_connection = AsyncMock()
 
-        @asyncio.coroutine
-        def mock_acquire():
-            class MockContext:
-                async def __aenter__(self):
-                    return mock_connection
+        class MockAsyncContextManager:
+            async def __aenter__(self):
+                return mock_connection
 
-                async def __aexit__(self, *args):
-                    pass
-
-            return MockContext()
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
 
         db_pool.pool = AsyncMock()
-        db_pool.pool.acquire.return_value = mock_acquire()
+        db_pool.pool.acquire = Mock(return_value=MockAsyncContextManager())
 
         # Malicious statistics data
         malicious_stats = {
@@ -462,7 +451,7 @@ class TestRateLimitingSecurity:
         reader = AsyncMock()
         writer = AsyncMock()
         writer.get_extra_info.return_value = ("192.0.2.3", 12345)
-        writer.close = AsyncMock()
+        writer.close = Mock()  # close() is synchronous
         writer.wait_closed = AsyncMock()
 
         with patch("src.bmp.server.logger") as mock_logger:
@@ -588,6 +577,9 @@ class TestAuthenticationBypass:
         reader = AsyncMock()
         writer = AsyncMock()
         writer.get_extra_info.return_value = ("0.0.0.0", 0)  # Suspicious source
+        reader.read.return_value = b""  # Simulate immediate connection termination
+        writer.close = Mock()  # Synchronous close method
+        writer.wait_closed = AsyncMock()  # Asynchronous wait_closed method
 
         # Session should still be created (BMP doesn't have auth by design)
         # but should be monitored and rate-limited

@@ -74,6 +74,8 @@ def validate_port(port: Any) -> Optional[int]:
 
 def sanitize_log_data(data: Any, max_len: int = 100) -> str:
     """Sanitize data for safe logging."""
+    import re
+
     if isinstance(data, bytes):
         # Convert bytes to hex representation
         hex_str = data.hex()
@@ -82,8 +84,29 @@ def sanitize_log_data(data: Any, max_len: int = 100) -> str:
         return hex_str
 
     str_data = str(data)
-    # Remove potential control characters (but keep tabs)
-    sanitized = "".join(char if char.isprintable() or char == '\t' else "?" for char in str_data)
+
+    # Remove XSS patterns
+    xss_patterns = [
+        r'<script.*?>.*?</script>',
+        r'javascript:',
+        r'alert\(',
+        r'<[a-zA-Z][^>]*>',  # Remove HTML tags (must start with letter)
+        r'</[a-zA-Z][^>]*>',  # Remove HTML closing tags
+        r'on\w+\s*=',  # Remove event handlers like onclick=
+    ]
+
+    sanitized = str_data
+    for pattern in xss_patterns:
+        sanitized = re.sub(pattern, '', sanitized, flags=re.IGNORECASE | re.DOTALL)
+
+    # Remove potential control characters (but keep tabs for readability)
+    sanitized = "".join(char if char.isprintable() or char in '\t' else "?" for char in sanitized)
+
+    # Remove null bytes and other binary data
+    sanitized = sanitized.replace('\x00', '?')
+    sanitized = sanitized.replace('\x01', '?')
+    sanitized = sanitized.replace('\x02', '?')
+    sanitized = sanitized.replace('\x03', '?')
 
     if len(sanitized) > max_len:
         return sanitized[:max_len] + "..."

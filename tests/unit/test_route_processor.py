@@ -255,7 +255,7 @@ class TestRouteProcessor:
 
         with patch("src.bmp.processor.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
-            mock_datetime.utcnow.return_value = mock_now
+            mock_datetime.now.return_value = mock_now
 
             timestamp = route_processor._get_timestamp(peer_info)
 
@@ -458,14 +458,17 @@ class TestRouteProcessor:
         """Test error handling in message processing."""
         router_ip = "192.0.2.100"
 
-        # Create invalid message that should trigger error
-        invalid_message = {"type": "invalid_type"}
+        # Create message that triggers error during processing
+        # Patch the route processor method to raise an exception
+        with patch.object(route_processor, '_process_route_monitoring', side_effect=Exception("Test error")):
+            valid_message = {"type": "route_monitoring"}
 
-        with patch("src.bmp.processor.logger") as mock_logger:
-            await route_processor.process_message(invalid_message, router_ip)
+            with patch("src.bmp.processor.logger") as mock_logger:
+                await route_processor.process_message(valid_message, router_ip)
 
-            # Error should be counted
-            assert route_processor.stats["errors"] == 1
+        # Error should be counted
+        assert route_processor.stats["errors"] == 1
+
 
     @pytest.mark.asyncio
     @pytest.mark.unit

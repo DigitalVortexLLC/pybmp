@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 import asyncpg
 
 from src.database.connection import DatabasePool
@@ -27,9 +27,20 @@ class TestDatabasePoolIntegration:
         mock_pool = AsyncMock()
         db_pool.pool = mock_pool
 
-        # Setup common mock behaviors
-        mock_pool.acquire.return_value.__aenter__ = AsyncMock()
-        mock_pool.acquire.return_value.__aexit__ = AsyncMock()
+        # Setup proper async context manager for pool.acquire()
+        class MockAsyncContextManager:
+            def __init__(self, connection):
+                self.connection = connection
+
+            async def __aenter__(self):
+                return self.connection
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
+
+        mock_connection = AsyncMock()
+        # Make acquire() return the context manager directly, not as a coroutine
+        mock_pool.acquire = Mock(return_value=MockAsyncContextManager(mock_connection))
 
         yield db_pool
 
@@ -44,7 +55,10 @@ class TestDatabasePoolIntegration:
 
         with patch("src.database.connection.asyncpg.create_pool") as mock_create:
             mock_pool = AsyncMock()
-            mock_create.return_value = mock_pool
+            mock_pool.close = AsyncMock()  # close() is async for asyncpg pools
+            # Make create_pool return a coroutine that resolves to the mock_pool
+            mock_create.return_value = asyncio.Future()
+            mock_create.return_value.set_result(mock_pool)
 
             # Test connect
             await db_pool.connect()
@@ -66,7 +80,8 @@ class TestDatabasePoolIntegration:
         mock_prepared = AsyncMock()
         mock_connection.prepare.return_value = mock_prepared
 
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         await real_db_pool.batch_insert_routes(routes)
 
@@ -86,7 +101,8 @@ class TestDatabasePoolIntegration:
         routes = generate_mock_route_data(5)
 
         mock_connection = AsyncMock()
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Process each route for history
         for route in routes:
@@ -111,7 +127,8 @@ class TestDatabasePoolIntegration:
 
         mock_connection = AsyncMock()
         mock_connection.fetchrow.return_value = {"id": 123}
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Create sessions
         session_ids = []
@@ -141,7 +158,8 @@ class TestDatabasePoolIntegration:
         stats_data = generate_mock_stats_data(5)
 
         mock_connection = AsyncMock()
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Insert statistics
         for stat in stats_data:
@@ -161,7 +179,8 @@ class TestDatabasePoolIntegration:
         """Test data cleanup workflow."""
         mock_connection = AsyncMock()
         mock_connection.execute.side_effect = ["DELETE 100", "DELETE 50"]
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         with patch("src.database.connection.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
@@ -194,7 +213,8 @@ class TestDatabasePoolIntegration:
             "withdrawn_routes": 500,
         }
         mock_connection.fetchrow.return_value = mock_summary
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         summary = await real_db_pool.get_route_summary()
 
@@ -221,7 +241,15 @@ class TestDatabasePoolIntegration:
             connection_index += 1
             return conn
 
-        real_db_pool.pool.acquire.return_value.__aenter__.side_effect = lambda: get_connection()
+        # Create a custom context manager that cycles through connections
+        class ConcurrentMockAsyncContextManager:
+            async def __aenter__(self):
+                return get_connection()
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return None
+
+        real_db_pool.pool.acquire = Mock(return_value=ConcurrentMockAsyncContextManager())
 
         # Prepare test data
         routes_batch = generate_mock_route_data(20)
@@ -276,7 +304,8 @@ class TestDatabasePoolIntegration:
         # Simulate transaction failure
         mock_prepared.executemany.side_effect = Exception("Database constraint violation")
 
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Should handle exception gracefully
         with pytest.raises(Exception):
@@ -293,7 +322,7 @@ class TestDatabasePoolIntegration:
         """Test behavior when connection pool is exhausted."""
         # Mock pool to simulate exhaustion
         mock_pool = AsyncMock()
-        mock_pool.acquire.side_effect = asyncio.TimeoutError("Pool exhausted")
+        mock_pool.acquire = Mock(side_effect=asyncio.TimeoutError("Pool exhausted"))
         real_db_pool.pool = mock_pool
 
         # Should propagate the timeout error
@@ -310,7 +339,8 @@ class TestDatabasePoolIntegration:
         mock_connection = AsyncMock()
         mock_prepared = AsyncMock()
         mock_connection.prepare.return_value = mock_prepared
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Test empty routes
         await real_db_pool.batch_insert_routes(edge_cases["empty_routes"])
@@ -333,7 +363,8 @@ class TestDatabasePoolIntegration:
     async def test_query_parameter_sanitization(self, real_db_pool):
         """Test that query parameters are properly sanitized."""
         mock_connection = AsyncMock()
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Test with potentially dangerous data
         dangerous_route = {
@@ -368,7 +399,8 @@ class TestDatabasePoolIntegration:
         mock_connection = AsyncMock()
         mock_prepared = AsyncMock()
         mock_connection.prepare.return_value = mock_prepared
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Simulate slow query
         async def slow_execution(*args):
@@ -395,7 +427,8 @@ class TestDatabasePoolIntegration:
         mock_connection = AsyncMock()
         mock_prepared = AsyncMock()
         mock_connection.prepare.return_value = mock_prepared
-        real_db_pool.pool.acquire.return_value.__aenter__.return_value = mock_connection
+        # Override the default mock connection with our test-specific one
+        real_db_pool.pool.acquire.return_value.connection = mock_connection
 
         # Create routes with fields in different orders
         route1 = {

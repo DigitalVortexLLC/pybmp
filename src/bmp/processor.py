@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 class RouteProcessor:
     """Process BMP messages and extract route information."""
 
-    def __init__(self, db_pool):
+    def __init__(self, db_pool, batch_size: int = 100):
         self.db_pool = db_pool
         self.route_buffer = []
         self.buffer_lock = asyncio.Lock()
+        self.batch_size = batch_size
         self.stats = {
             "messages_processed": 0,
             "routes_processed": 0,
@@ -56,8 +57,15 @@ class RouteProcessor:
         if bgp_message.get("type") != "UPDATE":
             return
 
+        from src.utils.validation import validate_as_number
+
         peer_ip = peer_info.get("peer_ip")
-        peer_as = peer_info.get("peer_as")
+        raw_peer_as = peer_info.get("peer_as")
+        peer_as = validate_as_number(raw_peer_as)
+        if peer_as is None:
+            # Skip processing for invalid AS numbers
+            logger.warning(f"Invalid AS number {raw_peer_as}, skipping route processing")
+            return
         timestamp = self._get_timestamp(peer_info)
 
         routes = []
@@ -102,7 +110,7 @@ class RouteProcessor:
                 self.route_buffer.extend(routes)
 
             # Flush buffer if it's large enough
-            if len(self.route_buffer) >= 100:
+            if len(self.route_buffer) >= self.batch_size:
                 await self.flush_routes()
 
     async def _process_mp_reach(
@@ -182,7 +190,7 @@ class RouteProcessor:
     ) -> Dict[str, Any]:
         """Create base route dictionary."""
         try:
-            network = ipaddress.ip_network(prefix)
+            network = ipaddress.ip_network(prefix, strict=False)
             prefix_len = network.prefixlen
         except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError) as e:
             logger.warning(f"Invalid prefix format '{prefix}': {e}")

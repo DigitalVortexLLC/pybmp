@@ -221,11 +221,10 @@ DB_PASSWORD=file_password
         with patch.dict(os.environ, {"DB_PASSWORD": "test"}):
             settings = Settings()
 
-            # Verify Config class attributes are set correctly
-            assert hasattr(settings.Config, "env_file")
-            assert settings.Config.env_file == ".env"
-            assert settings.Config.env_file_encoding == "utf-8"
-            assert settings.Config.case_sensitive is False
+            # Verify model_config attributes are set correctly (Pydantic v2)
+            assert settings.model_config.get("env_file") == ".env"
+            assert settings.model_config.get("env_file_encoding") == "utf-8"
+            assert settings.model_config.get("case_sensitive") is False
 
     @pytest.mark.unit
     def test_default_field_values(self):

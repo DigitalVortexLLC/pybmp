@@ -89,7 +89,7 @@ class BMPMessageBuilder:
             attr_value = attr["value"]
 
             if attr_type == 1:  # ORIGIN
-                attr_data += struct.pack(">BBBB", 0x40, 1, 1, attr_value)
+                attr_data += struct.pack(">BBB", 0x40, 1, 1) + struct.pack(">B", attr_value)
             elif attr_type == 2:  # AS_PATH
                 # Simplified AS_PATH
                 as_path_data = struct.pack(">BB", 2, 2)  # AS_SEQUENCE, length 2

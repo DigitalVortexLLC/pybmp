@@ -49,13 +49,18 @@ class BMPSession:
                 # Check buffer size limit to prevent memory exhaustion
                 if len(self.buffer) + len(data) > self.MAX_BUFFER_SIZE:
                     logger.error(f"Buffer overflow protection triggered for {self.router_ip}")
+                    self.buffer = b""  # Clear buffer to recover from overflow
                     break
 
                 self.buffer += data
                 self.last_message = datetime.now(timezone.utc)
 
                 # Process complete messages from buffer
-                while len(self.buffer) >= 6:
+                max_iterations = 1000  # Prevent infinite loops
+                iterations = 0
+                while len(self.buffer) >= 6 and iterations < max_iterations:
+                    iterations += 1
+
                     # Check if we have a complete message
                     if self.buffer[0] != 3:  # BMP version check
                         logger.warning(f"Invalid BMP version from {self.router_ip}")
@@ -92,6 +97,11 @@ class BMPSession:
                                 f"Processed {self.messages_received} messages from {self.router_ip}"
                             )
 
+                # If we hit max iterations without processing all data, clear buffer to prevent memory exhaustion
+                if iterations >= max_iterations and len(self.buffer) >= 6:
+                    logger.warning(f"Max iterations reached, clearing buffer for {self.router_ip}")
+                    self.buffer = b""
+
         except asyncio.CancelledError:
             logger.info(f"BMP session with {self.router_ip} cancelled")
         except Exception as e:
@@ -122,7 +132,7 @@ class BMPServer:
     def __init__(self, settings: Settings, db_pool: DatabasePool):
         self.settings = settings
         self.db_pool = db_pool
-        self.processor = RouteProcessor(db_pool)
+        self.processor = RouteProcessor(db_pool, batch_size=settings.batch_size)
         self.sessions: Dict[str, BMPSession] = {}
         self.server = None
         self._running = False
