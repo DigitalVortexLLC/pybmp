@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, validator
+from pydantic import Field, field_validator, ConfigDict
 from typing import Optional
 import os
 
@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     db_port: int = Field(default=5432, env="DB_PORT")
     db_name: str = Field(default="bmp_collector", env="DB_NAME")
     db_user: str = Field(default="bmp_user", env="DB_USER")
-    db_password: str = Field(env="DB_PASSWORD")
+    db_password: str = Field(default="", env="DB_PASSWORD")
     db_pool_size: int = Field(default=20, env="DB_POOL_SIZE")
     db_max_overflow: int = Field(default=40, env="DB_MAX_OVERFLOW")
 
@@ -39,12 +39,14 @@ class Settings(BaseSettings):
     batch_timeout_seconds: int = Field(default=5, env="BATCH_TIMEOUT_SECONDS")
     worker_threads: int = Field(default=4, env="WORKER_THREADS")
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False
+    )
 
-    @validator("log_level")
+    @field_validator("log_level")
+    @classmethod
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:

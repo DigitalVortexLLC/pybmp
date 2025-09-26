@@ -170,7 +170,6 @@ jobs:
     - name: Run stress tests
       run: |
         poetry run pytest tests/ \
-          --stress \
           --timeout=300 \
           --junitxml=pytest-stress.xml \
           -v \

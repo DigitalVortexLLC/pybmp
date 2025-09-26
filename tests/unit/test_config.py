@@ -153,17 +153,16 @@ LOG_LEVEL=DEBUG
         with open(env_file_path, "w") as f:
             f.write(env_file_content)
 
-        # Mock the working directory to point to temp directory
-        with patch("os.getcwd", return_value=temp_directory):
-            with patch.dict(os.environ, {}, clear=True):
-                settings = Settings()
+        # Test loading from specific env file path
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=env_file_path)
 
-                assert settings.db_host == "file_host"
-                assert settings.db_port == 5433
-                assert settings.db_name == "file_db"
-                assert settings.db_user == "file_user"
-                assert settings.db_password == "file_password"
-                assert settings.log_level == "DEBUG"
+            assert settings.db_host == "file_host"
+            assert settings.db_port == 5433
+            assert settings.db_name == "file_db"
+            assert settings.db_user == "file_user"
+            assert settings.db_password == "file_password"
+            assert settings.log_level == "DEBUG"
 
     @pytest.mark.unit
     def test_env_file_override_by_environment(self, temp_directory):
@@ -370,12 +369,11 @@ DB_PASSWORD=valid_password
         with open(env_file_path, "w") as f:
             f.write(malformed_content)
 
-        with patch("os.getcwd", return_value=temp_directory):
-            with patch.dict(os.environ, {}, clear=True):
-                # Should handle malformed lines gracefully
-                settings = Settings()
-                assert settings.db_host == "valid_host"
-                assert settings.db_password == "valid_password"
+        with patch.dict(os.environ, {}, clear=True):
+            # Should handle malformed lines gracefully
+            settings = Settings(_env_file=env_file_path)
+            assert settings.db_host == "valid_host"
+            assert settings.db_password == "valid_password"
 
     @pytest.mark.unit
     def test_case_sensitivity_off(self):

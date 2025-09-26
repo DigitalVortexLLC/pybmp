@@ -47,7 +47,6 @@ COPY --from=builder /app/.venv /app/.venv
 
 # Copy application code
 COPY src/ ./src/
-COPY README.md ./
 
 # Copy additional files
 COPY pyproject.toml ./
