@@ -47,6 +47,13 @@ class Settings(BaseSettings):
             raise ValueError(f"log_level must be one of {valid_levels}")
         return v.upper()
 
+    @field_validator("db_password")
+    @classmethod
+    def validate_db_password(cls, v: str) -> str:
+        if not v or v.strip() == "":
+            raise ValueError("db_password is required and cannot be empty")
+        return v
+
     @property
     def database_url(self) -> str:
         """Generate PostgreSQL connection URL."""

@@ -314,11 +314,17 @@ jobs:
 
     - name: Run performance tests
       run: |
-        poetry run pytest tests/ \
-          --no-cov \
-          --benchmark-only \
-          --benchmark-json=benchmark.json \
-          -m "slow"
+        # Check if any slow tests exist
+        if poetry run pytest tests/ --collect-only -q -m "slow" 2>/dev/null | grep -q "test"; then
+          poetry run pytest tests/ \
+            --no-cov \
+            --benchmark-only \
+            --benchmark-json=benchmark.json \
+            -m "slow"
+        else
+          echo "No performance/benchmark tests found, skipping..."
+          echo "{}" > benchmark.json
+        fi
       env:
         DB_PASSWORD: test_password
 
