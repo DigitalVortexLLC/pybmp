@@ -113,9 +113,10 @@ class TestValidateIpAddress:
     @pytest.mark.unit
     def test_ip_address_edge_cases(self):
         """Test IP address edge cases."""
-        # Test IPv4 mapped IPv6
+        # Test IPv4 mapped IPv6 - accept both canonical forms
         result = validate_ip_address("::ffff:192.0.2.1")
-        assert result == "::ffff:192.0.2.1"
+        # Python's ipaddress may format this as hex on some platforms
+        assert result in ["::ffff:192.0.2.1", "::ffff:c000:201"]
 
         # Test compressed IPv6
         result = validate_ip_address("2001:db8::8a2e:370:7334")
