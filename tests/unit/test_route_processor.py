@@ -2,7 +2,7 @@
 import asyncio
 import json
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -466,7 +466,7 @@ class TestRouteProcessor:
         ):
             valid_message = {"type": "route_monitoring"}
 
-            with patch("src.bmp.processor.logger") as mock_logger:
+            with patch("src.bmp.processor.logger") as _mock_logger:
                 await route_processor.process_message(valid_message, router_ip)
 
         # Error should be counted

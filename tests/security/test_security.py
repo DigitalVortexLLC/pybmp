@@ -2,11 +2,10 @@
 import asyncio
 import struct
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.bmp.parser import BMPParser
 from src.bmp.processor import RouteProcessor
 from src.bmp.server import BMPServer, BMPSession
 from src.database.connection import DatabasePool
@@ -506,7 +505,7 @@ class TestMemoryExhaustionProtection:
             },
             "bgp_message": {
                 "type": "UPDATE",
-                "nlri": [f"10.{i//256}.{i%256}.0/24" for i in range(1000)],  # 1000 routes
+                "nlri": [f"10.{i // 256}.{i % 256}.0/24" for i in range(1000)],  # 1000 routes
             },
         }
 
@@ -601,7 +600,7 @@ class TestAuthenticationBypass:
         suspicious_message += b"\x00" * 18  # Rest of peer header
 
         # Parser should handle but validation should catch suspicious values
-        result = bmp_parser.parse_message(suspicious_message)
+        _result = bmp_parser.parse_message(suspicious_message)
         # May parse but suspicious values should be validated elsewhere
 
 

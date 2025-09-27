@@ -1,7 +1,6 @@
 """Unit tests for BGP message parser - clean version."""
 import ipaddress
 import struct
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -118,7 +117,7 @@ class TestBGPMessageParser:
         """Test parsing BGP OPEN message."""
         # Create complete OPEN message
         open_payload = struct.pack(">BHHIB", 4, 65001, 180, 0xC0000201, 0)
-        open_data = struct.pack(">16sHBB", b"\xff" * 16, 29, 1, 0) + open_payload
+        open_data = struct.pack(">16sHB", b"\xff" * 16, 29, 1) + open_payload
         result = bgp_parser.parse_bgp_message(open_data)
         assert result is not None
         assert result["type"] == "OPEN"
@@ -131,7 +130,7 @@ class TestBGPMessageParser:
         """Test parsing minimal BGP UPDATE message."""
         # UPDATE with no withdrawn routes, no path attributes, no NLRI
         update_payload = struct.pack(">HH", 0, 0)  # withdrawn_len=0, attr_len=0
-        update_data = struct.pack(">16sHBB", b"\xff" * 16, 23, 2, 0) + update_payload
+        update_data = struct.pack(">16sHB", b"\xff" * 16, 23, 2) + update_payload
         result = bgp_parser.parse_bgp_message(update_data)
         assert result is not None
         assert result["type"] == "UPDATE"
@@ -149,7 +148,7 @@ class TestBGPMessageParser:
 
         update_payload = withdrawn_len + path_attr_len + nlri
         length = 19 + len(update_payload)
-        update_data = struct.pack(">16sHBB", b"\xff" * 16, length, 2, 0) + update_payload
+        update_data = struct.pack(">16sHB", b"\xff" * 16, length, 2) + update_payload
 
         result = bgp_parser.parse_bgp_message(update_data)
         assert result is not None

@@ -1,5 +1,5 @@
 """Additional tests to reach 80% coverage."""
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -45,8 +45,8 @@ class TestAdditionalCoverage:
         parser = BMPParser()
         # Try to parse per-peer header with insufficient data
         try:
-            result = parser._parse_per_peer_header(b"\x00\x01")  # Too short
-        except:
+            _result = parser._parse_per_peer_header(b"\x00\x01")  # Too short
+        except Exception:
             pass  # Expected to fail
 
     @pytest.mark.unit
@@ -115,8 +115,8 @@ class TestAdditionalCoverage:
 
         # Test with simple initiation data
         try:
-            result = parser._parse_initiation_message(b"test")
-        except:
+            _result = parser._parse_initiation_message(b"test")
+        except Exception:
             pass  # Expected to fail with invalid data
 
     @pytest.mark.unit
@@ -126,14 +126,13 @@ class TestAdditionalCoverage:
 
         # Test with simple termination data
         try:
-            result = parser._parse_termination_message(b"test")
-        except:
+            _result = parser._parse_termination_message(b"test")
+        except Exception:
             pass  # Expected to fail with invalid data
 
     @pytest.mark.unit
     def test_server_session_creation(self):
         """Test server session creation."""
-        from unittest.mock import AsyncMock, MagicMock
 
         from src.bmp.server import BMPSession
 
@@ -148,7 +147,6 @@ class TestAdditionalCoverage:
     @pytest.mark.unit
     def test_bmp_server_initialization(self):
         """Test BMP server initialization."""
-        from unittest.mock import MagicMock
 
         from src.bmp.server import BMPServer
 
@@ -176,7 +174,6 @@ class TestAdditionalCoverage:
     @pytest.mark.unit
     def test_bmp_server_session_info(self):
         """Test BMP server session info."""
-        from unittest.mock import MagicMock
 
         from src.bmp.server import BMPServer
 
@@ -229,14 +226,13 @@ class TestAdditionalCoverage:
 
         # Test with minimal valid data structures
         try:
-            result = parser._parse_per_peer_header(b"\x00" * 42)  # Minimum peer header size
-        except:
+            _result = parser._parse_per_peer_header(b"\x00" * 42)  # Minimum peer header size
+        except Exception:
             pass  # Expected to handle gracefully
 
     @pytest.mark.unit
     def test_server_edge_cases(self):
         """Test server edge cases."""
-        from unittest.mock import AsyncMock, MagicMock
 
         from src.bmp.server import BMPSession
 
@@ -263,19 +259,18 @@ class TestAdditionalCoverage:
 
         # Test basic functionality
         try:
-            result = parser._parse_tlv(b"\x00\x01\x00\x04test")  # Valid TLV structure
-        except:
+            _result = parser._parse_tlv(b"\x00\x01\x00\x04test")  # Valid TLV structure
+        except Exception:
             pass  # Expected to handle gracefully
 
         try:
-            result = parser._parse_route_monitoring_message(b"test")
-        except:
+            _result = parser._parse_route_monitoring_message(b"test")
+        except Exception:
             pass  # Expected to handle gracefully
 
     @pytest.mark.unit
     def test_processor_edge_cases(self):
         """Test processor edge cases."""
-        from unittest.mock import MagicMock
 
         from src.bmp.processor import RouteProcessor
 
@@ -349,7 +344,6 @@ class TestAdditionalCoverage:
     @pytest.mark.unit
     def test_server_additional_coverage(self):
         """Test server additional coverage."""
-        from unittest.mock import AsyncMock, MagicMock
 
         from src.bmp.server import BMPSession
 
@@ -369,7 +363,6 @@ class TestAdditionalCoverage:
     @pytest.mark.unit
     def test_processor_additional_coverage(self):
         """Test processor additional coverage."""
-        from unittest.mock import MagicMock
 
         from src.bmp.processor import RouteProcessor
 
@@ -388,9 +381,6 @@ class TestAdditionalCoverage:
     @pytest.mark.unit
     def test_processor_missing_lines(self):
         """Test processor missing lines 96, 103, 363, 365."""
-        import asyncio
-        from unittest.mock import MagicMock
-
         from src.bmp.processor import RouteProcessor
 
         # Mock database pool
@@ -409,7 +399,6 @@ class TestAdditionalCoverage:
     @pytest.mark.unit
     async def test_processor_mp_reach_unreach(self):
         """Test processor MP_REACH and MP_UNREACH to hit lines 96, 103."""
-        from unittest.mock import AsyncMock, MagicMock
 
         from src.bmp.processor import RouteProcessor
 
@@ -455,14 +444,14 @@ class TestAdditionalCoverage:
         try:
             result, offset = parse_variable_length_ip(b"\x08\xff", 0)  # Invalid short data
             assert result is not None
-        except:
+        except Exception:
             pass
 
         # Test parse_ip_prefix with invalid data
         try:
             result, offset = parse_ip_prefix(b"\x21\xff\xff\xff\xff\x01", 0)  # Invalid IPv4 prefix
             assert result is not None
-        except:
+        except Exception:
             pass
 
         # Test validate_data_length
@@ -480,14 +469,14 @@ class TestAdditionalCoverage:
 
         # Test error handling paths
         try:
-            result = parser._parse_route_monitoring_message(b"\x00\x01\x02")
-        except:
+            _result = parser._parse_route_monitoring_message(b"\x00\x01\x02")
+        except Exception:
             pass  # Expected to handle gracefully
 
         # Test basic TLV parsing
         try:
-            result = parser._parse_tlv(b"\x00\x01\x00\x04test")
-        except:
+            _result = parser._parse_tlv(b"\x00\x01\x00\x04test")
+        except Exception:
             pass  # Expected to handle gracefully
 
     @pytest.mark.unit
@@ -514,7 +503,7 @@ class TestAdditionalCoverage:
                 ">Q", b"\x01\x02", 0
             )  # 8-byte format with only 2 bytes
         except ParseError as e:
-            assert "Struct unpack error" in str(e)
+            assert "Insufficient data for struct unpack" in str(e)
 
     @pytest.mark.unit
     def test_additional_parser_coverage_boost(self):

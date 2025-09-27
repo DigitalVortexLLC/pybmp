@@ -6,9 +6,8 @@ delegating to specialized parser classes internally.
 """
 
 import logging
-import struct
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from .bgp_parser import AFI, SAFI, BGPMessageParser
 from .bmp_message_parser import BMPMessageParser, BMPMessageType
@@ -17,8 +16,10 @@ from .parsing_utils import ParseError, safe_struct_unpack, validate_data_length
 
 logger = logging.getLogger(__name__)
 
-
 # Export the enums for backward compatibility
+__all__ = ["AFI", "SAFI", "BMPParser", "BMPPeerType", "BGPMessageType"]
+
+
 class BMPPeerType(IntEnum):
     """BMP Peer Type values."""
 
@@ -129,15 +130,15 @@ class BMPParser:
             if msg_type == BMPMessageType.ROUTE_MONITORING:
                 return self._parse_route_monitoring(payload)
             elif msg_type == BMPMessageType.PEER_UP:
-                return self.bmp_parser.parse_peer_up(payload)
+                return cast(Dict[str, Any], self.bmp_parser.parse_peer_up(payload))
             elif msg_type == BMPMessageType.PEER_DOWN:
-                return self.bmp_parser.parse_peer_down(payload)
+                return cast(Dict[str, Any], self.bmp_parser.parse_peer_down(payload))
             elif msg_type == BMPMessageType.STATS_REPORT:
-                return self.bmp_parser.parse_stats_report(payload)
+                return cast(Dict[str, Any], self.bmp_parser.parse_stats_report(payload))
             elif msg_type == BMPMessageType.INITIATION:
-                return self.bmp_parser.parse_initiation(payload)
+                return cast(Dict[str, Any], self.bmp_parser.parse_initiation(payload))
             elif msg_type == BMPMessageType.TERMINATION:
-                return self.bmp_parser.parse_termination(payload)
+                return cast(Dict[str, Any], self.bmp_parser.parse_termination(payload))
             else:
                 logger.warning(f"Unknown BMP message type: {msg_type}")
                 return None
@@ -158,7 +159,9 @@ class BMPParser:
             # Parse BGP message
             if offset < len(data):
                 bgp_message = self.bgp_parser.parse_bgp_message(data[offset:])
-
+                if bgp_message is None:
+                    logger.error("Failed to parse BGP message in ROUTE_MONITORING")
+                    return None
                 return {"type": "route_monitoring", "peer": peer_header, "bgp_message": bgp_message}
             else:
                 logger.error("No BGP message data in ROUTE_MONITORING")
@@ -179,7 +182,7 @@ class BMPParser:
             BMPMessageType.TERMINATION: "terminations",
         }
 
-        stat_name = type_map.get(msg_type)
+        stat_name = type_map.get(BMPMessageType(msg_type))
         if stat_name:
             self.stats[stat_name] += 1
 
@@ -188,7 +191,7 @@ class BMPParser:
 
         Maintains backward compatibility with original parser.
         """
-        return self.stats.copy()
+        return cast(Dict[str, int], self.stats.copy())
 
     def reset_stats(self) -> None:
         """Reset parser statistics."""
@@ -199,7 +202,7 @@ class BMPParser:
     def _parse_per_peer_header(self, data: bytes) -> Tuple[Dict[str, Any], int]:
         """Legacy method for backward compatibility."""
         try:
-            return self.bmp_parser.parse_per_peer_header(data)
+            return cast(Tuple[Dict[str, Any], int], self.bmp_parser.parse_per_peer_header(data))
         except ParseError as e:
             if "per-peer header" in str(e):
                 raise ValueError("Insufficient data for per-peer header") from e
@@ -207,11 +210,11 @@ class BMPParser:
 
     def _parse_bgp_message(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser.parse_bgp_message(data)
+        return cast(Optional[Dict[str, Any]], self.bgp_parser.parse_bgp_message(data))
 
     def _parse_evpn_route(self, route_type: int, data: bytes) -> Optional[Dict[str, Any]]:
         """Legacy method for backward compatibility."""
-        return self.evpn_parser.parse_evpn_route(route_type, data)
+        return cast(Optional[Dict[str, Any]], self.evpn_parser.parse_evpn_route(route_type, data))
 
     def _parse_route_distinguisher(self, data: bytes) -> str:
         """Legacy method for backward compatibility."""
@@ -222,33 +225,33 @@ class BMPParser:
     # Additional legacy methods that might be called by external code
     def _parse_peer_up(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bmp_parser.parse_peer_up(data)
+        return cast(Dict[str, Any], self.bmp_parser.parse_peer_up(data))
 
     def _parse_peer_down(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bmp_parser.parse_peer_down(data)
+        return cast(Dict[str, Any], self.bmp_parser.parse_peer_down(data))
 
     def _parse_stats_report(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bmp_parser.parse_stats_report(data)
+        return cast(Dict[str, Any], self.bmp_parser.parse_stats_report(data))
 
     def _parse_initiation(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bmp_parser.parse_initiation(data)
+        return cast(Dict[str, Any], self.bmp_parser.parse_initiation(data))
 
     def _parse_termination(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bmp_parser.parse_termination(data)
+        return cast(Dict[str, Any], self.bmp_parser.parse_termination(data))
 
     # Additional legacy methods that tests expect
     def _parse_bgp_update(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_bgp_update(data)
+        return cast(Optional[Dict[str, Any]], self.bgp_parser._parse_bgp_update(data))
 
     def _parse_bgp_open(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
         try:
-            return self.bgp_parser._parse_bgp_open(data)
+            return cast(Dict[str, Any], self.bgp_parser._parse_bgp_open(data))
         except ParseError as e:
             return {"type": "OPEN", "error": str(e)}
 
@@ -290,33 +293,40 @@ class BMPParser:
 
     def _parse_communities(self, data: bytes) -> List[str]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_communities(data)
+        return cast(List[str], self.bgp_parser._parse_communities(data))
 
     def _parse_large_communities(self, data: bytes) -> List[str]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_large_communities(data)
+        return cast(List[str], self.bgp_parser._parse_large_communities(data))
 
-    def _parse_nlri(self, data: bytes) -> List[str]:
-        """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_nlri_prefixes(data)
+    def _parse_nlri(self, data: bytes, afi: int = 1) -> List[str]:
+        """Legacy method for backward compatibility with AFI parameter."""
+        if afi == 1:  # IPv4
+            return cast(List[str], self.bgp_parser._parse_nlri_prefixes(data))
+        elif afi == 2:  # IPv6
+            return cast(List[str], self.bgp_parser._parse_ipv6_nlri(data))
+        else:
+            return [data.hex()]
 
     def _parse_mp_reach_nlri(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_mp_reach_nlri(data)
+        result = self.bgp_parser._parse_mp_reach_nlri(data)
+        return cast(Dict[str, Any], result if result is not None else {})
 
     def _parse_mp_unreach_nlri(self, data: bytes) -> Dict[str, Any]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_mp_unreach_nlri(data)
+        result = self.bgp_parser._parse_mp_unreach_nlri(data)
+        return cast(Dict[str, Any], result if result is not None else {})
 
     def _parse_tlvs(self, data: bytes) -> List[Dict[str, Any]]:
         """Legacy method for backward compatibility."""
-        return self.bmp_parser._parse_tlvs(data)
+        return cast(List[Dict[str, Any]], self.bmp_parser._parse_tlvs(data))
 
     def _parse_capabilities(self, data: bytes) -> List[Dict[str, Any]]:
         """Legacy method for backward compatibility."""
         # Handle both formats - direct capability data and option-wrapped data
         if len(data) >= 2 and data[0] == 2:  # Option type 2 (Capability)
-            return self.bgp_parser._parse_capabilities(data)
+            return cast(List[Dict[str, Any]], self.bgp_parser._parse_capabilities(data))
         else:
             # Direct capability data format for tests
             capabilities = []
@@ -341,13 +351,4 @@ class BMPParser:
 
     def _parse_path_attributes(self, data: bytes) -> List[Dict[str, Any]]:
         """Legacy method for backward compatibility."""
-        return self.bgp_parser._parse_path_attributes(data)
-
-    def _parse_nlri(self, data: bytes, afi: int = 1) -> List[str]:
-        """Legacy method for backward compatibility with AFI parameter."""
-        if afi == 1:  # IPv4
-            return self.bgp_parser._parse_nlri_prefixes(data)
-        elif afi == 2:  # IPv6
-            return self.bgp_parser._parse_ipv6_nlri(data)
-        else:
-            return [data.hex()]
+        return cast(List[Dict[str, Any]], self.bgp_parser._parse_path_attributes(data))

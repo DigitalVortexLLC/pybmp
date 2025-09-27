@@ -1,6 +1,6 @@
 """BMP message fixtures for testing."""
 import struct
-from typing import Any, Dict, List
+from typing import Dict, List
 
 
 class BMPMessageBuilder:

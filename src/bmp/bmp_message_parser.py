@@ -8,10 +8,10 @@ import ipaddress
 import logging
 import struct
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from .bgp_parser import BGPMessageParser
-from .parsing_utils import ParseError, safe_struct_unpack, validate_data_length
+from .parsing_utils import safe_struct_unpack, validate_data_length
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class BMPMessageParser:
         """
         validate_data_length(data, 42, "per-peer header")
 
-        header = {}
+        header: Dict[str, Any] = {}
         offset = 0
 
         # Parse per-peer header fields
@@ -143,7 +143,7 @@ class BMPMessageParser:
         # Reason for peer down
         reason, offset = safe_struct_unpack(">B", data, offset)
 
-        message = {"type": "peer_down", "peer": peer_header, "reason": reason}
+        message: Dict[str, Any] = {"type": "peer_down", "peer": peer_header, "reason": reason}
 
         # Parse additional data based on reason
         if reason == 1 and offset < len(data):
@@ -196,7 +196,7 @@ class BMPMessageParser:
 
     def parse_initiation(self, data: bytes) -> Dict[str, Any]:
         """Parse INITIATION message."""
-        message = {"type": "initiation"}
+        message: Dict[str, Any] = {"type": "initiation"}
 
         # Parse TLVs
         message["information"] = self._parse_tlvs(data)
@@ -205,7 +205,7 @@ class BMPMessageParser:
 
     def parse_termination(self, data: bytes) -> Dict[str, Any]:
         """Parse TERMINATION message."""
-        message = {"type": "termination"}
+        message: Dict[str, Any] = {"type": "termination"}
 
         # Parse TLVs
         message["information"] = self._parse_tlvs(data)

@@ -6,9 +6,8 @@ and their path attributes.
 
 import ipaddress
 import logging
-import struct
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Union
 
 from .evpn_parser import EVPNParser
 from .parsing_utils import ParseError, safe_struct_unpack, validate_data_length
@@ -79,15 +78,19 @@ class BGPMessageParser:
             length, offset = safe_struct_unpack(">H", data, 16)
             msg_type, offset = safe_struct_unpack(">B", data, 18)
 
-            # Check if there's an extra byte after type (common in tests)
-            payload_start = 20 if len(data) > 19 and data[19] == 0 else 19
+            # BGP payload starts immediately after the 19-byte header
+            payload_start = 19
 
             if msg_type == BGPMessageType.UPDATE:
                 return self._parse_bgp_update(data[payload_start:])
             elif msg_type == BGPMessageType.OPEN:
                 return self._parse_bgp_open(data[payload_start:])
-            else:
+            elif msg_type in [BGPMessageType.NOTIFICATION, BGPMessageType.KEEPALIVE]:
                 return {"type": self._get_bgp_message_type_name(msg_type), "length": length}
+            else:
+                # Unknown message type - return None
+                logger.warning(f"Unknown BGP message type: {msg_type}")
+                return None
 
         except ParseError as e:
             logger.error(f"Error parsing BGP message: {e}")
@@ -103,7 +106,7 @@ class BGPMessageParser:
         """
         validate_data_length(data, 4, "BGP UPDATE message")
 
-        message = {"type": "UPDATE"}
+        message: Dict[str, Any] = {"type": "UPDATE"}
         offset = 0
 
         # Parse withdrawn routes length and routes
@@ -147,7 +150,7 @@ class BGPMessageParser:
         """
         validate_data_length(data, 10, "BGP OPEN message")
 
-        message = {"type": "OPEN"}
+        message: Dict[str, Any] = {"type": "OPEN"}
         offset = 0
 
         # Parse basic OPEN fields
@@ -265,10 +268,7 @@ class BGPMessageParser:
             path_type_names = {1: "AS_SET", 2: "AS_SEQUENCE"}
             path_type_name = path_type_names.get(path_type, f"AS_TYPE_{path_type}")
 
-            as_path.append({
-                "type": path_type_name,
-                "as_numbers": segment
-            })
+            as_path.append({"type": path_type_name, "as_numbers": segment})
 
         return as_path
 
@@ -293,64 +293,74 @@ class BGPMessageParser:
                 communities.append(f"{global_admin}:{local_data1}:{local_data2}")
         return communities
 
-    def _parse_mp_reach_nlri(self, data: bytes) -> Dict[str, Any]:
+    def _parse_mp_reach_nlri(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Parse MP_REACH_NLRI attribute."""
-        validate_data_length(data, 5, "MP_REACH_NLRI")
+        try:
+            validate_data_length(data, 5, "MP_REACH_NLRI")
 
-        result = {}
-        offset = 0
+            result: Dict[str, Any] = {}
+            offset = 0
 
-        # Parse AFI/SAFI
-        result["afi"], offset = safe_struct_unpack(">H", data, offset)
-        result["safi"], offset = safe_struct_unpack(">B", data, offset)
+            # Parse AFI/SAFI
+            result["afi"], offset = safe_struct_unpack(">H", data, offset)
+            result["safi"], offset = safe_struct_unpack(">B", data, offset)
 
-        # Parse next hop
-        next_hop_len, offset = safe_struct_unpack(">B", data, offset)
-        if next_hop_len > 0 and offset + next_hop_len <= len(data):
-            next_hop_data = data[offset : offset + next_hop_len]
-            result["next_hop"] = self._parse_next_hop(next_hop_data, result["afi"])
-            offset += next_hop_len
+            # Parse next hop
+            next_hop_len, offset = safe_struct_unpack(">B", data, offset)
+            if next_hop_len > 0 and offset + next_hop_len <= len(data):
+                next_hop_data = data[offset : offset + next_hop_len]
+                result["next_hop"] = self._parse_next_hop(next_hop_data, result["afi"])
+                offset += next_hop_len
 
-        # Skip reserved byte
-        offset += 1
+            # Skip reserved byte
+            offset += 1
 
-        # Parse NLRI
-        if offset < len(data):
-            nlri_data = data[offset:]
-            if result["afi"] == AFI.IPV4 and result["safi"] == SAFI.EVPN:
-                result["nlri"] = self._parse_evpn_nlri(nlri_data)
-            elif result["afi"] == AFI.IPV6:
-                result["nlri"] = self._parse_ipv6_nlri(nlri_data)
-            else:
-                result["nlri"] = nlri_data.hex()
+            # Parse NLRI
+            if offset < len(data):
+                nlri_data = data[offset:]
+                if result["afi"] == AFI.IPV4 and result["safi"] == SAFI.EVPN:
+                    result["nlri"] = self._parse_evpn_nlri(nlri_data)
+                elif result["afi"] == AFI.IPV6:
+                    result["nlri"] = self._parse_ipv6_nlri(nlri_data)
+                elif result["afi"] == AFI.IPV4:
+                    result["nlri"] = self._parse_nlri_prefixes(nlri_data)
+                else:
+                    result["nlri"] = nlri_data.hex()
 
-        return result
+            return result
+        except ParseError:
+            return None
 
-    def _parse_mp_unreach_nlri(self, data: bytes) -> Dict[str, Any]:
+    def _parse_mp_unreach_nlri(self, data: bytes) -> Optional[Dict[str, Any]]:
         """Parse MP_UNREACH_NLRI attribute."""
-        validate_data_length(data, 3, "MP_UNREACH_NLRI")
+        try:
+            validate_data_length(data, 3, "MP_UNREACH_NLRI")
 
-        result = {}
-        offset = 0
+            result: Dict[str, Any] = {}
+            offset = 0
 
-        # Parse AFI/SAFI
-        result["afi"], offset = safe_struct_unpack(">H", data, offset)
-        result["safi"], offset = safe_struct_unpack(">B", data, offset)
+            # Parse AFI/SAFI
+            result["afi"], offset = safe_struct_unpack(">H", data, offset)
+            result["safi"], offset = safe_struct_unpack(">B", data, offset)
 
-        # Parse withdrawn routes
-        if offset < len(data):
-            nlri_data = data[offset:]
-            if result["afi"] == AFI.IPV4 and result["safi"] == SAFI.EVPN:
-                withdrawn = self._parse_evpn_nlri(nlri_data)
-            elif result["afi"] == AFI.IPV6:
-                withdrawn = self._parse_ipv6_nlri(nlri_data)
-            else:
-                withdrawn = nlri_data.hex()
+            # Parse withdrawn routes
+            if offset < len(data):
+                nlri_data = data[offset:]
+                if result["afi"] == AFI.IPV4 and result["safi"] == SAFI.EVPN:
+                    withdrawn: Union[List[Dict[str, Any]], List[str], str] = self._parse_evpn_nlri(
+                        nlri_data
+                    )
+                elif result["afi"] == AFI.IPV6:
+                    withdrawn = self._parse_ipv6_nlri(nlri_data)
+                else:
+                    withdrawn = nlri_data.hex()
 
-            result["nlri"] = withdrawn
-            result["withdrawn"] = withdrawn  # For backward compatibility
+                result["nlri"] = withdrawn
+                result["withdrawn"] = withdrawn  # For backward compatibility
 
-        return result
+            return result
+        except ParseError:
+            return None
 
     def _parse_evpn_nlri(self, data: bytes) -> List[Dict[str, Any]]:
         """Parse EVPN NLRI data."""
@@ -546,4 +556,7 @@ class BGPMessageParser:
             BGPMessageType.NOTIFICATION: "NOTIFICATION",
             BGPMessageType.KEEPALIVE: "KEEPALIVE",
         }
-        return type_names.get(msg_type, "UNKNOWN")
+        try:
+            return type_names.get(BGPMessageType(msg_type), "UNKNOWN")
+        except ValueError:
+            return "UNKNOWN"

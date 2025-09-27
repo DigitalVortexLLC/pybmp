@@ -2,7 +2,7 @@
 import asyncio
 import time
 from collections import defaultdict
-from typing import Dict, Optional
+from typing import Any, Dict
 
 
 class RateLimiter:
@@ -73,7 +73,7 @@ class RateLimiter:
                 return True
             return False
 
-    def get_stats(self) -> Dict[str, any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get current rate limiter statistics."""
         return {
             "active_connections": dict(self.connections_per_ip),

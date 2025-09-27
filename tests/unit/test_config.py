@@ -1,6 +1,6 @@
 """Unit tests for configuration management."""
 import os
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError

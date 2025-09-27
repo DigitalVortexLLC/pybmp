@@ -346,7 +346,7 @@ class TestBMPServer:
         # Mock cleanup result
         mock_db_pool.cleanup_old_data.return_value = 150
 
-        with patch("src.bmp.server.logger") as mock_logger:
+        with patch("src.bmp.server.logger") as _mock_logger:
             # Run cleanup for a short time
             cleanup_task = asyncio.create_task(server._periodic_cleanup())
             await asyncio.sleep(0.01)  # Let it run briefly
@@ -456,7 +456,7 @@ class TestBMPServerIntegrationScenarios:
         for i in range(3):
             reader = AsyncMock()
             writer = AsyncMock()
-            writer.get_extra_info.return_value = (f"192.0.2.{i+1}", 12345)
+            writer.get_extra_info.return_value = (f"192.0.2.{i + 1}", 12345)
 
             # Each client sends one message then disconnects
             reader.read.side_effect = [TEST_MESSAGES["route_monitoring"], b""]

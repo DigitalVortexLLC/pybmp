@@ -1,6 +1,5 @@
 """Unit tests for rate limiter."""
 import asyncio
-import time
 from unittest.mock import patch
 
 import pytest
@@ -378,7 +377,7 @@ class TestRateLimiterEdgeCases:
             mock_time.return_value = start_time - 1
 
             # Should not add negative tokens
-            allowed = await limiter.check_message_allowed(ip)
+            _allowed = await limiter.check_message_allowed(ip)
             # Behavior depends on implementation, but shouldn't crash
 
     @pytest.mark.asyncio

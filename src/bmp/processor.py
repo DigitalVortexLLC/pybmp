@@ -3,9 +3,10 @@ import ipaddress
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from src.bmp.parser import AFI, SAFI
+from src.database.connection import DatabasePool
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +14,9 @@ logger = logging.getLogger(__name__)
 class RouteProcessor:
     """Process BMP messages and extract route information."""
 
-    def __init__(self, db_pool, batch_size: int = 100):
+    def __init__(self, db_pool: DatabasePool, batch_size: int = 100):
         self.db_pool = db_pool
-        self.route_buffer = []
+        self.route_buffer: List[Dict[str, Any]] = []
         self.buffer_lock = asyncio.Lock()
         self.batch_size = batch_size
         self.stats = {
@@ -124,8 +125,8 @@ class RouteProcessor:
         routes: List[Dict],
     ) -> None:
         """Process MP_REACH_NLRI attribute."""
-        afi = mp_reach.get("afi")
-        safi = mp_reach.get("safi")
+        afi = mp_reach.get("afi", AFI.IPV4)
+        safi = mp_reach.get("safi", SAFI.UNICAST)
         next_hop = mp_reach.get("next_hop")
         nlri = mp_reach.get("nlri", [])
 
@@ -161,8 +162,8 @@ class RouteProcessor:
         routes: List[Dict],
     ) -> None:
         """Process MP_UNREACH_NLRI attribute."""
-        afi = mp_unreach.get("afi")
-        safi = mp_unreach.get("safi")
+        afi = mp_unreach.get("afi", AFI.IPV4)
+        safi = mp_unreach.get("safi", SAFI.UNICAST)
         withdrawn = mp_unreach.get("withdrawn", [])
 
         family = self._get_family(afi, safi)

@@ -1,5 +1,4 @@
 """Unit tests for validation utilities."""
-import ipaddress
 
 import pytest
 
@@ -447,7 +446,6 @@ class TestValidationEdgeCases:
         """Test that validators work correctly under concurrent access."""
         # These functions should be stateless and thread-safe
         import threading
-        import time
 
         results = []
         errors = []

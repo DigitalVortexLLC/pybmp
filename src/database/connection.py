@@ -1,8 +1,7 @@
-import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import asyncpg
 
@@ -51,12 +50,12 @@ class DatabasePool:
     async def execute(self, query: str, *args) -> str:
         """Execute a query without returning results."""
         async with self.acquire() as conn:
-            return await conn.execute(query, *args)
+            return cast(str, await conn.execute(query, *args))
 
     async def fetch(self, query: str, *args) -> List[asyncpg.Record]:
         """Execute a query and fetch all results."""
         async with self.acquire() as conn:
-            return await conn.fetch(query, *args)
+            return cast(List[asyncpg.Record], await conn.fetch(query, *args))
 
     async def fetchrow(self, query: str, *args) -> Optional[asyncpg.Record]:
         """Execute a query and fetch a single row."""
@@ -217,7 +216,7 @@ class DatabasePool:
                 session_data.get("peer_as"),
                 session_data.get("peer_bgp_id"),
             )
-            return result["id"]
+            return cast(int, result["id"])
 
     async def close_session(self, router_ip: str, session_id: int) -> None:
         """Close a router session."""

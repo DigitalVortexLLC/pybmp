@@ -1,6 +1,5 @@
 """End-to-end message processing tests."""
 import asyncio
-from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -8,7 +7,6 @@ import pytest
 from src.bmp.parser import BMPParser
 from src.bmp.processor import RouteProcessor
 from src.bmp.server import BMPServer, BMPSession
-from src.database.connection import DatabasePool
 from tests.fixtures.bmp_messages import TEST_MESSAGES, BMPMessageBuilder
 
 
@@ -23,7 +21,7 @@ class TestEndToEndMessageProcessing:
         processor = AsyncMock(spec=RouteProcessor)
         processor.process_message = AsyncMock()
         processor.flush_routes = AsyncMock()
-        parser = BMPParser()
+        _parser = BMPParser()
 
         reader = AsyncMock()
         writer = AsyncMock()
@@ -40,7 +38,7 @@ class TestEndToEndMessageProcessing:
         # Add multiple route monitoring messages
         for i in range(5):
             route_msg = BMPMessageBuilder.create_route_monitoring_message(
-                peer_ip="10.0.0.1", peer_as=65001, nlri=[f"203.0.{i}.0/24", f"203.0.{i+100}.0/24"]
+                peer_ip="10.0.0.1", peer_as=65001, nlri=[f"203.0.{i}.0/24", f"203.0.{i + 100}.0/24"]
             )
             session_messages.append(route_msg)
 
@@ -94,7 +92,7 @@ class TestEndToEndMessageProcessing:
             # Route announcements
             for i in range(3):
                 route_msg = BMPMessageBuilder.create_route_monitoring_message(
-                    peer_ip=peer_ip, peer_as=peer_as, nlri=[f"10.{peer_as-65000}.{i}.0/24"]
+                    peer_ip=peer_ip, peer_as=peer_as, nlri=[f"10.{peer_as - 65000}.{i}.0/24"]
                 )
                 messages.append(route_msg)
 
@@ -325,7 +323,7 @@ class TestEndToEndMessageProcessing:
         for i in range(3):
             reader = AsyncMock()
             writer = AsyncMock()
-            writer.get_extra_info.return_value = (f"192.0.2.{i+1}", 12345)
+            writer.get_extra_info.return_value = (f"192.0.2.{i + 1}", 12345)
 
             # Each session sends different message patterns
             if i == 0:
@@ -375,7 +373,7 @@ class TestEndToEndMessageProcessing:
 
         for i in range(50):  # 50 route messages
             route_msg = BMPMessageBuilder.create_route_monitoring_message(
-                nlri=[f"203.{i//256}.{i%256}.0/24"]
+                nlri=[f"203.{i // 256}.{i % 256}.0/24"]
             )
             messages.append(route_msg)
 
@@ -447,12 +445,12 @@ class TestEndToEndMessageProcessing:
             # Alternate between different message types
             if i % 3 == 0:
                 msg = BMPMessageBuilder.create_route_monitoring_message(
-                    nlri=[f"10.{i//256}.{i%256}.0/24"] * 5  # Multiple prefixes per message
+                    nlri=[f"10.{i // 256}.{i % 256}.0/24"] * 5  # Multiple prefixes per message
                 )
             elif i % 3 == 1:
                 msg = BMPMessageBuilder.create_stats_report_message()
             else:
-                msg = BMPMessageBuilder.create_peer_up_message(peer_ip=f"10.0.{i//256}.{i%256}")
+                msg = BMPMessageBuilder.create_peer_up_message(peer_ip=f"10.0.{i // 256}.{i % 256}")
             messages.append(msg)
 
         messages.append(b"")  # EOF
@@ -461,7 +459,7 @@ class TestEndToEndMessageProcessing:
         session = BMPSession(reader, writer, router_ip, processor)
 
         # Monitor memory usage (simplified)
-        initial_buffer_size = len(processor.route_buffer)
+        _initial_buffer_size = len(processor.route_buffer)
 
         await session.handle()
 
@@ -470,7 +468,7 @@ class TestEndToEndMessageProcessing:
 
         # Verify buffers were managed (flushed periodically)
         # Due to batch size limits, buffer shouldn't grow indefinitely
-        final_buffer_size = len(processor.route_buffer)
+        _final_buffer_size = len(processor.route_buffer)
         # Buffer should have been flushed multiple times
         assert mock_db_pool.batch_insert_routes.call_count > 1
 

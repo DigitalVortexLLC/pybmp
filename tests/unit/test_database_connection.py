@@ -1,18 +1,13 @@
 """Unit tests for database connection layer."""
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from datetime import datetime
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from src.database.connection import DatabasePool
-from tests.fixtures.database_fixtures import (
-    EDGE_CASE_DATA,
-    MOCK_DB_RESPONSES,
-    generate_mock_route_data,
-    generate_mock_session_data,
-)
+from tests.fixtures.database_fixtures import MOCK_DB_RESPONSES, generate_mock_route_data
 
 
 class TestDatabasePool:
@@ -530,7 +525,7 @@ class TestDatabasePoolEdgeCases:
 
         # Test that exceptions are properly propagated
         with pytest.raises(ValueError):
-            async with db_pool.acquire() as conn:
+            async with db_pool.acquire() as _conn:
                 raise ValueError("Test exception")
 
     @pytest.mark.asyncio

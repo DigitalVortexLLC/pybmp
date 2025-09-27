@@ -7,7 +7,7 @@ and provide consistent parsing behavior across different message types.
 import ipaddress
 import logging
 import struct
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +153,9 @@ def parse_ip_prefix(data: bytes, offset: int) -> Tuple[Optional[str], int]:
         if prefix_len <= 32:  # IPv4
             # Pad to 4 bytes for IPv4
             padded_ip = prefix_data + bytes(4 - len(prefix_data))
-            ip_addr = ipaddress.IPv4Address(padded_ip)
+            ip_addr: Union[ipaddress.IPv4Address, ipaddress.IPv6Address] = ipaddress.IPv4Address(
+                padded_ip
+            )
             return f"{ip_addr}/{prefix_len}", new_offset
         elif prefix_len <= 128:  # IPv6
             # Pad to 16 bytes for IPv6

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Optional, Set
+from typing import Dict, Optional
 
 from src.bmp.parser import BMPParser
 from src.bmp.processor import RouteProcessor
@@ -29,7 +29,7 @@ class BMPSession:
         self.router_ip = router_ip
         self.processor = processor
         self.parser = BMPParser()
-        self.session_id = None
+        self.session_id: Optional[str] = None
         self.connected_at = datetime.now(timezone.utc)
         self.last_message = datetime.now(timezone.utc)
         self.messages_received = 0
@@ -64,7 +64,17 @@ class BMPSession:
                     # Check if we have a complete message
                     if self.buffer[0] != 3:  # BMP version check
                         logger.warning(f"Invalid BMP version from {self.router_ip}")
-                        self.buffer = self.buffer[1:]  # Skip byte and continue
+                        # Try to get message length to skip the entire invalid message
+                        if len(self.buffer) >= 5:
+                            msg_length = int.from_bytes(self.buffer[1:5], "big")
+                            if 6 <= msg_length <= self.MAX_MESSAGE_SIZE:
+                                # Skip the entire invalid message
+                                self.buffer = self.buffer[msg_length:]
+                            else:
+                                # Invalid length, just skip one byte
+                                self.buffer = self.buffer[1:]
+                        else:
+                            self.buffer = self.buffer[1:]
                         continue
 
                     msg_length = int.from_bytes(self.buffer[1:5], "big")
@@ -134,10 +144,10 @@ class BMPServer:
         self.db_pool = db_pool
         self.processor = RouteProcessor(db_pool, batch_size=settings.batch_size)
         self.sessions: Dict[str, BMPSession] = {}
-        self.server = None
+        self.server: Optional[asyncio.Server] = None
         self._running = False
-        self._flush_task = None
-        self._cleanup_task = None
+        self._flush_task: Optional[asyncio.Task] = None
+        self._cleanup_task: Optional[asyncio.Task] = None
 
     async def start(self) -> None:
         """Start the BMP server."""

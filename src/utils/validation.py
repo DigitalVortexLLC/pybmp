@@ -1,6 +1,5 @@
 """Input validation utilities for BMP collector."""
 import ipaddress
-import struct
 from typing import Any, Optional
 
 

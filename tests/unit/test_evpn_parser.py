@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 
 from src.bmp.evpn_parser import EVPNParser
-from src.bmp.parsing_utils import ParseError
 
 
 class TestEVPNParser:
