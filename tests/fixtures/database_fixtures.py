@@ -1,4 +1,5 @@
 """Database test fixtures and mock data."""
+
 import random
 from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List

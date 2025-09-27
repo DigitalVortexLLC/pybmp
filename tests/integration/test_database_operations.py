@@ -1,4 +1,5 @@
 """Integration tests for database operations."""
+
 import asyncio
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch

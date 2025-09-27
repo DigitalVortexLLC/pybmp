@@ -1,4 +1,5 @@
 """Additional tests to reach 80% coverage."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

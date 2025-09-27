@@ -1,4 +1,5 @@
 """Rate limiting for BMP connections."""
+
 import asyncio
 import time
 from collections import defaultdict
@@ -78,7 +79,7 @@ class RateLimiter:
         return {
             "active_connections": dict(self.connections_per_ip),
             "total_ips": len(self.connections_per_ip),
-            "max_connections": max(self.connections_per_ip.values())
-            if self.connections_per_ip
-            else 0,
+            "max_connections": (
+                max(self.connections_per_ip.values()) if self.connections_per_ip else 0
+            ),
         }

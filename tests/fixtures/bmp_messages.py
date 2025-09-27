@@ -1,4 +1,5 @@
 """BMP message fixtures for testing."""
+
 import struct
 from typing import Dict, List
 
@@ -302,7 +303,7 @@ TEST_MESSAGES = {
 INVALID_MESSAGES = {
     "wrong_version": b"\x99" + b"\x00\x00\x00\x10" + b"\x00" + b"test",
     "short_header": b"\x03\x00",
-    "invalid_length": b"\x03\xFF\xFF\xFF\xFF\x00",
+    "invalid_length": b"\x03\xff\xff\xff\xff\x00",
     "zero_length": b"\x03\x00\x00\x00\x00\x00",
     "oversized": b"\x03" + struct.pack(">I", 0x10000000) + b"\x00" + b"X" * 1000,
 }

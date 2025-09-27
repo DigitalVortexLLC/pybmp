@@ -1,4 +1,5 @@
 """Pytest configuration and shared fixtures."""
+
 import asyncio
 import os
 import shutil
@@ -245,7 +246,7 @@ def malicious_bmp_data():
     """Malicious BMP data for security testing."""
     return {
         # Oversized message
-        "oversized_message": b"\x03" + b"\xFF" * 4 + b"\x00" + b"A" * 1000000,
+        "oversized_message": b"\x03" + b"\xff" * 4 + b"\x00" + b"A" * 1000000,
         # Invalid version
         "invalid_version": b"\x99" + b"\x00\x00\x00\x10" + b"\x00" + b"test",
         # Malformed header

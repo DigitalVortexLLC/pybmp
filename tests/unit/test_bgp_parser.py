@@ -1,4 +1,5 @@
 """Unit tests for BGP message parser - clean version."""
+
 import ipaddress
 import struct
 

@@ -1,4 +1,5 @@
 """Unit tests for EVPN parser."""
+
 import struct
 from unittest.mock import patch
 

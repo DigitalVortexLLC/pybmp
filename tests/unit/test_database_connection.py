@@ -1,4 +1,5 @@
 """Unit tests for database connection layer."""
+
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -495,7 +496,7 @@ class TestDatabasePoolEdgeCases:
                 "router_ip": "192.0.2.1",
                 "peer_ip": "10.0.0.1",
                 "prefix": "10.0.1.0/24",
-                "family": "IPv4"
+                "family": "IPv4",
                 # Missing many fields
             }
         ]
@@ -610,7 +611,7 @@ class TestDatabasePoolEdgeCases:
 
         stats_data = {
             "router_ip": "192.0.2.1",
-            "peer_ip": "10.0.0.1"
+            "peer_ip": "10.0.0.1",
             # No explicit time provided
         }
 
@@ -642,7 +643,7 @@ class TestDatabasePoolEdgeCases:
 
         session_data = {
             "router_ip": "192.0.2.1",
-            "session_start": datetime.now()
+            "session_start": datetime.now(),
             # Missing optional fields
         }
 

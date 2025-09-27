@@ -1,4 +1,5 @@
 """Security tests for BMP collector."""
+
 import asyncio
 import struct
 from datetime import datetime

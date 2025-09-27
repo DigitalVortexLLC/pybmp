@@ -1,4 +1,5 @@
 """End-to-end message processing tests."""
+
 import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 

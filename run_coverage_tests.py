@@ -95,16 +95,14 @@ working_tests = [
     "tests/unit/test_additional_coverage.py::TestAdditionalCoverage::test_error_paths_specific",
 ]
 
+
 def main():
     """Run coverage tests."""
-    cmd = [
-        "/Users/aaronroth/.local/bin/poetry", "run", "pytest"
-    ] + working_tests + [
-        "--cov=src",
-        "--cov-fail-under=80",
-        "--tb=no",
-        "-q"
-    ]
+    cmd = (
+        ["/Users/aaronroth/.local/bin/poetry", "run", "pytest"]
+        + working_tests
+        + ["--cov=src", "--cov-fail-under=80", "--tb=no", "-q"]
+    )
 
     print(f"Running {len(working_tests)} test modules/cases...")
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -116,15 +114,16 @@ def main():
     print(f"\nReturn code: {result.returncode}")
 
     # Extract coverage percentage
-    for line in result.stderr.split('\n'):
-        if 'Total coverage:' in line:
+    for line in result.stderr.split("\n"):
+        if "Total coverage:" in line:
             print(f"\nFinal coverage: {line}")
             break
-        if 'Required test coverage of 80% reached' in line:
+        if "Required test coverage of 80% reached" in line:
             print(f"\n✅ SUCCESS: {line}")
             break
 
     return result.returncode
+
 
 if __name__ == "__main__":
     sys.exit(main())

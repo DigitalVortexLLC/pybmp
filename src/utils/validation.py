@@ -1,4 +1,5 @@
 """Input validation utilities for BMP collector."""
+
 import ipaddress
 from typing import Any, Optional
 

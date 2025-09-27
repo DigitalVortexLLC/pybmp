@@ -1,4 +1,5 @@
 """Unit tests for configuration management."""
+
 import os
 from unittest.mock import patch
 

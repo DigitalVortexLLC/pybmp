@@ -1,4 +1,5 @@
 """Integration tests for BMP server functionality."""
+
 import asyncio
 import struct
 from datetime import datetime

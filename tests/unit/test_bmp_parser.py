@@ -1,4 +1,5 @@
 """Unit tests for BMP parser."""
+
 import struct
 from unittest.mock import patch
 
@@ -341,7 +342,7 @@ class TestBMPParser:
         # Test with corrupted data that should trigger exception handling during per-peer header parsing
         # Create a route monitoring message with correct message length but insufficient per-peer header data
         corrupted_data = (
-            b"\x03\x00\x00\x00\x2A\x00" + b"\xff" * 36
+            b"\x03\x00\x00\x00\x2a\x00" + b"\xff" * 36
         )  # 42 bytes total, need 42 for per-peer header
 
         with patch("src.bmp.parser.logger") as mock_logger:

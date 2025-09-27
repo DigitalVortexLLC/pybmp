@@ -282,9 +282,7 @@ class BMPParser:
             type_name = (
                 "AS_SEQUENCE"
                 if path_type == 2
-                else "AS_SET"
-                if path_type == 1
-                else f"AS_TYPE_{path_type}"
+                else "AS_SET" if path_type == 1 else f"AS_TYPE_{path_type}"
             )
 
             legacy_format.append({"type": type_name, "as_numbers": as_numbers})
