@@ -1,0 +1,54 @@
+site_name: PyBMP Documentation
+site_description: BGP Monitoring Protocol (BMP) collector with TimescaleDB storage
+site_author: Digital Vortex LLC
+site_url: https://digitalvortexllc.github.io/pybmp/
+repo_url: https://github.com/DigitalVortexLLC/pybmp
+repo_name: DigitalVortexLLC/pybmp
+edit_uri: edit/main/docs/
+
+nav:
+  - Home: index.md
+  - Installation & Configuration: installation.md
+  - Useful Queries: queries.md
+  - Logging & Troubleshooting: troubleshooting.md
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/DigitalVortexLLC/pybmp
