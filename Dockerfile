@@ -25,7 +25,11 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 
 # Install dependencies and ensure .venv is created
-RUN poetry install --only=main --no-root && \
+RUN poetry config virtualenvs.create true && \
+    poetry config virtualenvs.in-project true && \
+    poetry --version && \
+    poetry install --only=main --no-root --no-interaction --no-ansi -vvv || \
+    (echo "Poetry install failed" && ls -la /app/ && poetry env info && exit 1) && \
     ls -la /app/ && \
     test -d /app/.venv && \
     echo "Virtual environment created successfully" && \
