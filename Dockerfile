@@ -24,8 +24,12 @@ WORKDIR /app
 # Copy Poetry files
 COPY pyproject.toml poetry.lock ./
 
-# Install dependencies
-RUN poetry install --only=main --no-root && rm -rf $POETRY_CACHE_DIR
+# Install dependencies and ensure .venv is created
+RUN poetry install --only=main --no-root && \
+    ls -la /app/ && \
+    test -d /app/.venv && \
+    echo "Virtual environment created successfully" && \
+    rm -rf $POETRY_CACHE_DIR
 
 # Production stage
 FROM python:3.11-slim as production
@@ -47,6 +51,7 @@ COPY --from=builder /app/.venv /app/.venv
 
 # Copy application code
 COPY src/ ./src/
+COPY main.py ./
 
 # Copy additional files
 COPY pyproject.toml ./
@@ -74,4 +79,4 @@ ENV PYTHONPATH=/app \
 EXPOSE 11019 9090
 
 # Default command
-CMD ["python", "-m", "src.main"]
+CMD ["python", "main.py"]

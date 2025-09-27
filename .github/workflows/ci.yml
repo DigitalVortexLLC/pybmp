@@ -199,10 +199,6 @@ jobs:
     - name: Run integration tests
       run: |
         poetry run pytest tests/integration/ \
-          --cov=src \
-          --cov-append \
-          --cov-report=xml \
-          --cov-report=term-missing \
           --junitxml=pytest-integration.xml \
           -v \
           -m "integration"
@@ -213,21 +209,13 @@ jobs:
         DB_USER: test_user
         DB_PASSWORD: test_password
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage.xml
-        flags: integration-tests
-        name: codecov-integration
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
-        path: |
-          pytest-integration.xml
-          coverage.xml
+        path: pytest-integration.xml
 
   # Security tests
   security-tests:
@@ -371,7 +359,7 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
