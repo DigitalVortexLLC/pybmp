@@ -199,6 +199,7 @@ jobs:
     - name: Run integration tests
       run: |
         poetry run pytest tests/integration/ \
+          --no-cov \
           --junitxml=pytest-integration.xml \
           -v \
           -m "integration"
@@ -255,6 +256,7 @@ jobs:
     - name: Run security tests
       run: |
         poetry run pytest tests/security/ \
+          --no-cov \
           --junitxml=pytest-security.xml \
           -v \
           -m "security"
@@ -313,6 +315,7 @@ jobs:
     - name: Run performance tests
       run: |
         poetry run pytest tests/ \
+          --no-cov \
           --benchmark-only \
           --benchmark-json=benchmark.json \
           -m "slow"

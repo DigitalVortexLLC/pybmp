@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     db_port: int = Field(default=5432)
     db_name: str = Field(default="bmp_collector")
     db_user: str = Field(default="bmp_user")
-    db_password: str
+    db_password: str = Field(default="")
     db_pool_size: int = Field(default=20)
     db_max_overflow: int = Field(default=40)
 
